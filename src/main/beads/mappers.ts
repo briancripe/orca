@@ -80,7 +80,10 @@ function mapPriority(value: unknown): BeadsIssuePriority {
   return Math.min(MAX_PRIORITY, Math.max(MIN_PRIORITY, Math.round(n))) as BeadsIssuePriority
 }
 
-function mapComment(raw: unknown): BeadsComment | null {
+// Why: exported so issues.ts can map `bd comment --json`'s flat single-object
+// response (same snake_case shape as a nested `bd show` comment) without a
+// second, duplicate parser.
+export function mapComment(raw: unknown): BeadsComment | null {
   if (!isRecord(raw)) {
     return null
   }
