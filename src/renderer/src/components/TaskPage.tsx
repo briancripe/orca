@@ -3195,7 +3195,9 @@ export default function TaskPage(): React.JSX.Element {
         preferredVisibleTaskProviders,
         {
           gitlabInstalled: preflightStatusCurrent && preflightStatus?.glab?.installed === true,
-          linearConnected: linearConnected === true
+          linearConnected: linearConnected === true,
+          // Why: bd-installed detection lands in a later slice (orca-0cc.4).
+          beadsInstalled: false
         },
         defaultTaskSource
       ),

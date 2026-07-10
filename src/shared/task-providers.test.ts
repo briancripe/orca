@@ -16,7 +16,17 @@ describe('task providers', () => {
   })
 
   it('falls back to all providers when none are visible', () => {
-    expect(normalizeVisibleTaskProviders([])).toEqual(['github', 'gitlab', 'linear', 'jira'])
+    expect(normalizeVisibleTaskProviders([])).toEqual([
+      'github',
+      'gitlab',
+      'linear',
+      'jira',
+      'beads'
+    ])
+  })
+
+  it('accepts beads in the visible provider list', () => {
+    expect(normalizeVisibleTaskProviders(['github', 'beads'])).toEqual(['github', 'beads'])
   })
 
   it('restores a valid saved default when provider settings drifted', () => {
@@ -43,6 +53,18 @@ describe('task providers', () => {
     })
   })
 
+  it('round-trips beads through provider settings normalization', () => {
+    expect(
+      normalizeTaskProviderSettings({
+        visibleTaskProviders: ['github', 'beads'],
+        defaultTaskSource: 'beads'
+      })
+    ).toEqual({
+      defaultTaskSource: 'beads',
+      visibleTaskProviders: ['github', 'beads']
+    })
+  })
+
   it('resolves hidden preferred providers to the first visible provider', () => {
     expect(resolveVisibleTaskProvider('github', ['linear'])).toBe('linear')
   })
@@ -51,7 +73,8 @@ describe('task providers', () => {
     expect(
       filterAvailableTaskProviders(['github', 'gitlab', 'linear'], {
         gitlabInstalled: false,
-        linearConnected: true
+        linearConnected: true,
+        beadsInstalled: false
       })
     ).toEqual(['github', 'linear'])
   })
@@ -62,7 +85,8 @@ describe('task providers', () => {
         ['linear'],
         {
           gitlabInstalled: false,
-          linearConnected: true
+          linearConnected: true,
+          beadsInstalled: false
         },
         'github'
       )
@@ -75,7 +99,8 @@ describe('task providers', () => {
         ['linear'],
         {
           gitlabInstalled: false,
-          linearConnected: true
+          linearConnected: true,
+          beadsInstalled: false
         },
         'linear'
       )
@@ -88,7 +113,8 @@ describe('task providers', () => {
         ['linear'],
         {
           gitlabInstalled: false,
-          linearConnected: true
+          linearConnected: true,
+          beadsInstalled: false
         },
         'gitlab'
       )
@@ -101,7 +127,8 @@ describe('task providers', () => {
         ['gitlab'],
         {
           gitlabInstalled: false,
-          linearConnected: true
+          linearConnected: true,
+          beadsInstalled: false
         },
         'bitbucket'
       )
@@ -112,7 +139,38 @@ describe('task providers', () => {
     expect(
       filterAvailableTaskProviders(['gitlab', 'linear'], {
         gitlabInstalled: false,
-        linearConnected: false
+        linearConnected: false,
+        beadsInstalled: false
+      })
+    ).toEqual(['github'])
+  })
+
+  it('shows beads when installed', () => {
+    expect(
+      filterAvailableTaskProviders(['github', 'beads'], {
+        gitlabInstalled: false,
+        linearConnected: false,
+        beadsInstalled: true
+      })
+    ).toEqual(['github', 'beads'])
+  })
+
+  it('filters beads out when not installed', () => {
+    expect(
+      filterAvailableTaskProviders(['github', 'beads'], {
+        gitlabInstalled: false,
+        linearConnected: false,
+        beadsInstalled: false
+      })
+    ).toEqual(['github'])
+  })
+
+  it('preserves the github fallback when only beads is requested and unavailable', () => {
+    expect(
+      filterAvailableTaskProviders(['beads'], {
+        gitlabInstalled: false,
+        linearConnected: false,
+        beadsInstalled: false
       })
     ).toEqual(['github'])
   })
