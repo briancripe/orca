@@ -49,6 +49,24 @@ const CASES: {
     transient: false
   },
   {
+    // Verified via live repro against installed bd 1.1.0 (`bd delete
+    // <nonexistent-id>`): bd delete shares an id-resolution helper that
+    // emits a different phrase order than "no issue(s) found matching"
+    // above.
+    name: 'unknown issue id (delete, singular)',
+    input: { stderr: 'Error: issue orca-nonexistent-id not found' },
+    type: 'not_found',
+    transient: false
+  },
+  {
+    // Verified via live repro against installed bd 1.1.0 (`bd delete
+    // <id1> <id2>`, both nonexistent).
+    name: 'unknown issue id (delete, batch/plural)',
+    input: { stderr: 'Error: issues not found: orca-nonexistent-1, orca-nonexistent-2' },
+    type: 'not_found',
+    transient: false
+  },
+  {
     name: 'dolt exclusive lock held by another process',
     input: {
       stderr:

@@ -82,6 +82,14 @@ const RULES: BdErrorRule[] = [
     classify: (raw) => ({ type: 'not_found', message: `Issue not found — ${raw.trim()}` })
   },
   {
+    // Verified against installed bd v1.1.0 (live repro): "Error: issue <id>
+    // not found" (singular, id inline) and "Error: issues not found:
+    // <id1>, <id2>" (batch/plural) — a different phrase order from the
+    // "no issue(s) found matching" rule above, so it needs its own match.
+    matches: (s) => /^error: issues? .*not found\b/.test(s),
+    classify: (raw) => ({ type: 'not_found', message: `Issue not found — ${raw.trim()}` })
+  },
+  {
     // Verified bd v1.1.0 strings: "no beads database found" (bd where has
     // no repo to resolve), "no beads configuration found in %s..." (warns
     // then falls back to a default db name), and "dolt directory not
