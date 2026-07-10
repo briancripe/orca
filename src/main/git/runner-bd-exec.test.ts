@@ -175,7 +175,12 @@ describe('bdExecFileAsync', () => {
     mockExecFileOnce(Object.assign(new Error('not found'), { stderr: 'issue orca-999 not found' }))
 
     await expect(
-      bdExecFileAsync(['show', 'orca-999'], { cwd: '/repo', readonly: true, idempotent: true })
+      bdExecFileAsync(['show'], {
+        cwd: '/repo',
+        readonly: true,
+        idempotent: true,
+        positionals: ['orca-999']
+      })
     ).rejects.toThrow('not found')
 
     expect(execFileMock).toHaveBeenCalledTimes(1)
@@ -189,10 +194,52 @@ describe('bdExecFileAsync', () => {
       })
     )
 
-    await expect(bdExecFileAsync(['show', 'orca-999'], { cwd: '/repo' })).rejects.toMatchObject({
+    await expect(
+      bdExecFileAsync(['show'], { cwd: '/repo', positionals: ['orca-999'] })
+    ).rejects.toMatchObject({
       stderr: 'Error: issue orca-999 not found\n'
     })
   })
+
+  it('appends positionals after a literal "--", following --readonly', async () => {
+    mockExecFileOnce({ stdout: '{}' })
+
+    await bdExecFileAsync(['show'], { cwd: '/repo', readonly: true, positionals: ['orca-999'] })
+
+    expect(execFileMock).toHaveBeenCalledWith(
+      'bd',
+      ['-C', '/repo', 'show', '--readonly', '--', 'orca-999'],
+      expect.anything(),
+      expect.any(Function)
+    )
+  })
+
+  it('omits the "--" terminator entirely when no positionals are given', async () => {
+    mockExecFileOnce({ stdout: '[]' })
+
+    await bdExecFileAsync(['list', '--limit', '0'], { cwd: '/repo' })
+
+    const [, args] = execFileMock.mock.calls[0]
+    expect(args).not.toContain('--')
+  })
+
+  it(
+    'rejects a hostile positional passed the natural way, before bd is ever spawned — ' +
+      'no assertBdArgSafe call anywhere in this test',
+    async () => {
+      const hostileId = '--db=/etc/passwd'
+
+      // This is the natural, obvious call a future call site (bd-utils
+      // issues.ts, IPC handlers) makes: hand the untrusted id straight to
+      // bdExecFileAsync via `positionals`. Nothing here pre-sanitizes it —
+      // the runner itself must refuse to build the argv.
+      await expect(
+        bdExecFileAsync(['show'], { cwd: '/repo', readonly: true, positionals: [hostileId] })
+      ).rejects.toThrow(/refusing to pass a bd argument that looks like a flag/)
+
+      expect(execFileMock).not.toHaveBeenCalled()
+    }
+  )
 })
 
 describe('isTransientBdError', () => {
@@ -222,17 +269,5 @@ describe('assertBdArgSafe (flag/option-injection guard)', () => {
       /refusing to pass a bd argument that looks like a flag/
     )
     expect(() => assertBdArgSafe('-x')).toThrow()
-  })
-
-  it('end-to-end: a leading-dash id never reaches the bd argv handed to execFile', async () => {
-    const hostileId = '--db=/etc/passwd'
-
-    expect(() =>
-      // This is how a real call site (e.g. bd-utils issues.ts) must build
-      // args from an untrusted value: run it through the guard first.
-      bdExecFileAsync(['show', assertBdArgSafe(hostileId)], { cwd: '/repo', readonly: true })
-    ).toThrow()
-
-    expect(execFileMock).not.toHaveBeenCalled()
   })
 })

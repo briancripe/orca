@@ -1595,6 +1595,15 @@ export type BdExecOptions = {
   maxBuffer?: number
   env?: NodeJS.ProcessEnv
   signal?: AbortSignal
+  /**
+   * Untrusted positional values (issue ids, free-text filters, titles) —
+   * anything that is NOT a code-authored flag/subcommand literal. `args`
+   * (bdExecFileAsync's first parameter) is for the latter only; there is no
+   * other way to get a value into bd's argv. bdExecFileAsync asserts every
+   * element here safe (assertBdArgSafe) *and* appends them after a literal
+   * `--`, so bd's Cobra/pflag parser can never reinterpret one as a flag.
+   */
+  positionals?: string[]
 }
 
 const DEFAULT_BD_EXEC_TIMEOUT_MS = 30_000
@@ -1632,10 +1641,13 @@ export function isTransientBdError(stderr: string): boolean {
  * but not *option smuggling* — bd's Cobra/pflag argv parser treats any bare
  * positional value beginning with `-` as another flag rather than data. An
  * issue id of `--db=/etc/passwd`, passed positionally, is parsed as the
- * `--db` global flag, not as the id. (bd's own `show --id=<id>` flag exists
- * specifically to work around this for ids that "look like flags".) Any
- * value sourced from outside this codebase (issue ids, free-text filters,
- * titles) must be run through this guard before joining a bd argv array.
+ * `--db` global flag, not as the id (verified against the real bd 1.1.0
+ * binary: `bd show --db=/etc/passwd` errors "at least one issue ID is
+ * required" — `--db` was silently consumed as the global flag). bd's own
+ * `show --id=<id>` flag exists specifically to work around this for ids
+ * that "look like flags". bdExecFileAsync calls this on every element of
+ * `options.positionals` itself — this export exists for direct unit testing
+ * and is not something callers need to invoke by hand.
  */
 export function assertBdArgSafe(value: string): string {
   if (value.startsWith('-')) {
@@ -1655,7 +1667,19 @@ function buildBdArgs(args: string[], options: BdExecOptions): string[] {
   // Why: appended, never merged into caller args — readonly is a runner-level
   // safety guarantee (reads never contend for the dolt write lock), not
   // something individual call sites should have to remember.
-  return options.readonly ? [...withDirectory, '--readonly'] : withDirectory
+  const withReadonly = options.readonly ? [...withDirectory, '--readonly'] : withDirectory
+  if (!options.positionals || options.positionals.length === 0) {
+    return withReadonly
+  }
+  // Why: bd is Cobra/pflag-based, which honors `--` as an explicit
+  // end-of-flags marker (verified against the real binary: `bd show --
+  // --db=x` searches for an issue literally named "--db=x" instead of
+  // consuming --db). Placed after --readonly since --readonly must still
+  // parse as a flag; only what follows `--` is guaranteed-positional.
+  // assertBdArgSafe is redundant defense-in-depth once `--` is present, but
+  // is cheap and catches a caller error immediately instead of letting bd
+  // search for a literal "--foo" id.
+  return [...withReadonly, '--', ...options.positionals.map(assertBdArgSafe)]
 }
 
 function nonInteractiveBdEnv(env: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
@@ -1671,6 +1695,13 @@ function nonInteractiveBdEnv(env: NodeJS.ProcessEnv = process.env): NodeJS.Proce
 /**
  * Async bd (Beads) CLI execution. Drop-in replacement for
  * `execFileAsync('bd', args, { cwd, encoding, ... })`.
+ *
+ * `args` is for code-authored flags/subcommand literals only (e.g.
+ * `['show']`, `['list', '--status', 'open']`) — never an externally-sourced
+ * value. Pass those through `options.positionals` instead; this function
+ * validates and `--`-terminates them before they ever reach bd's argv (see
+ * assertBdArgSafe / buildBdArgs), so a hostile id can't smuggle a flag in
+ * regardless of how it's called.
  *
  * Retries a transient Dolt lock error only when `options.idempotent` is
  * true — writes (`bd create`, etc.) are never safe to auto-retry, since a
