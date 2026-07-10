@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type * as Runner from '../git/runner'
-import { bdListJson, bdShowNotFoundJson, bdShowWithCommentsJson } from './bd-json-fixtures'
+import { bdShowWithCommentsJson } from './bd-json-fixtures'
 
 const { bdExecFileAsyncMock } = vi.hoisted(() => ({
   bdExecFileAsyncMock: vi.fn()
@@ -14,17 +14,7 @@ vi.mock('../git/runner', async () => {
   }
 })
 
-import {
-  addIssueComment,
-  closeIssue,
-  createIssue,
-  getIssue,
-  listAssignableUsers,
-  listIssues,
-  listLabels,
-  reopenIssue,
-  updateIssue
-} from './issues'
+import { addIssueComment, closeIssue, createIssue, reopenIssue, updateIssue } from './issue-crud'
 
 function call(index: number): { args: string[]; options: Record<string, unknown> } {
   const [args, options] = bdExecFileAsyncMock.mock.calls[index] as [
@@ -34,101 +24,9 @@ function call(index: number): { args: string[]; options: Record<string, unknown>
   return { args, options }
 }
 
-describe('beads issues', () => {
+describe('beads issue crud', () => {
   beforeEach(() => {
     bdExecFileAsyncMock.mockReset()
-  })
-
-  describe('listIssues', () => {
-    it('always passes an explicit --limit, --readonly, --no-pager, and -C via cwd', async () => {
-      bdExecFileAsyncMock.mockResolvedValueOnce({ stdout: '[]', stderr: '' })
-      await listIssues('/repo', {})
-      const { args, options } = call(0)
-      expect(args).toEqual(['list', '--json', '--no-pager', '--limit', '50'])
-      expect(options).toMatchObject({ cwd: '/repo', readonly: true })
-    })
-
-    it('renders multi-status filters in comma form, not repeated flags', async () => {
-      bdExecFileAsyncMock.mockResolvedValueOnce({ stdout: '[]', stderr: '' })
-      await listIssues('/repo', { status: ['open', 'in_progress'] })
-      const { args } = call(0)
-      expect(args).toContain('--status')
-      expect(args[args.indexOf('--status') + 1]).toBe('open,in_progress')
-      expect(args.filter((a) => a === '--status')).toHaveLength(1)
-    })
-
-    it('passes --ready for the ready filter', async () => {
-      bdExecFileAsyncMock.mockResolvedValueOnce({ stdout: '[]', stderr: '' })
-      await listIssues('/repo', { ready: true })
-      expect(call(0).args).toContain('--ready')
-    })
-
-    it('applies type/assignee/label/parent/titleContains filters as flag values', async () => {
-      bdExecFileAsyncMock.mockResolvedValueOnce({ stdout: '[]', stderr: '' })
-      await listIssues('/repo', {
-        type: 'bug',
-        assignee: 'alice',
-        label: 'backend',
-        parent: 'bd-1',
-        titleContains: 'crash',
-        limit: 10
-      })
-      const { args } = call(0)
-      expect(args).toEqual([
-        'list',
-        '--json',
-        '--no-pager',
-        '--type',
-        'bug',
-        '--assignee',
-        'alice',
-        '--label',
-        'backend',
-        '--parent',
-        'bd-1',
-        '--title-contains',
-        'crash',
-        '--limit',
-        '10'
-      ])
-    })
-
-    it('maps bd list rows to BeadsWorkItem', async () => {
-      bdExecFileAsyncMock.mockResolvedValueOnce({ stdout: bdListJson, stderr: '' })
-      const result = await listIssues('/repo', {})
-      expect(result.error).toBeUndefined()
-      expect(result.items).toHaveLength(3)
-      expect(result.items[0]).toMatchObject({ id: 'bd-fixture-sandbox-vr8', status: 'in_progress' })
-    })
-
-    it('classifies an exec failure into a structured error instead of throwing', async () => {
-      bdExecFileAsyncMock.mockRejectedValueOnce(
-        Object.assign(new Error('no db'), { stderr: 'Error: no beads database found' })
-      )
-      const result = await listIssues('/repo', {})
-      expect(result.items).toEqual([])
-      expect(result.error).toMatchObject({ type: 'not_found' })
-    })
-  })
-
-  describe('getIssue', () => {
-    it('calls bd show with --json --include-comments and the id as a positional', async () => {
-      bdExecFileAsyncMock.mockResolvedValueOnce({ stdout: bdShowWithCommentsJson, stderr: '' })
-      const issue = await getIssue('/repo', 'bd-fixture-sandbox-zk3')
-      const { args, options } = call(0)
-      expect(args).toEqual(['show', '--json', '--include-comments'])
-      expect(options.positionals).toEqual(['bd-fixture-sandbox-zk3'])
-      expect(options.readonly).toBe(true)
-      expect(issue?.id).toBe('bd-fixture-sandbox-zk3')
-      expect(issue?.comments).toHaveLength(1)
-    })
-
-    it('returns null when bd show reports the id was not found', async () => {
-      bdExecFileAsyncMock.mockRejectedValueOnce(
-        Object.assign(new Error('not found'), { stderr: bdShowNotFoundJson })
-      )
-      await expect(getIssue('/repo', 'missing')).resolves.toBeNull()
-    })
   })
 
   describe('createIssue', () => {
@@ -266,28 +164,6 @@ describe('beads issues', () => {
       expect(args).toEqual(['comment', '--json'])
       expect(options.positionals).toEqual(['bd-1', 'hello world'])
       expect(result).toMatchObject({ ok: true, comment: { id: 'c-1', text: 'hello world' } })
-    })
-  })
-
-  describe('listLabels / listAssignableUsers', () => {
-    it('listLabels passes an explicit --limit 0 (unlimited) and --all', async () => {
-      bdExecFileAsyncMock.mockResolvedValueOnce({ stdout: bdListJson, stderr: '' })
-      const result = await listLabels('/repo')
-      expect(call(0).args).toEqual(['list', '--json', '--no-pager', '--all', '--limit', '0'])
-      expect(result.items).toEqual(['backend', 'urgent'])
-    })
-
-    it('listAssignableUsers scrapes distinct assignee/owner values', async () => {
-      bdExecFileAsyncMock.mockResolvedValueOnce({ stdout: bdListJson, stderr: '' })
-      const result = await listAssignableUsers('/repo')
-      expect(call(0).args).toEqual(['list', '--json', '--no-pager', '--all', '--limit', '0'])
-      expect(result.items).toEqual(['brian@xenophon.dev'])
-    })
-
-    it('respects an explicit limit override', async () => {
-      bdExecFileAsyncMock.mockResolvedValueOnce({ stdout: '[]', stderr: '' })
-      await listLabels('/repo', { limit: 200 })
-      expect(call(0).args).toEqual(['list', '--json', '--no-pager', '--all', '--limit', '200'])
     })
   })
 })
