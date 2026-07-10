@@ -35,6 +35,11 @@ export type PreflightStatus = {
   // affordances (the GitLab tab in the source picker, MR list, etc.)
   // gate on `glab?.authenticated`.
   glab?: { installed: boolean; authenticated: boolean }
+  // Why: optional for the same back-compat reason as glab — older remote
+  // runtime servers won't send it. bd has no hosted auth, so unlike gh/glab
+  // this is install-only (see orca-0cc design: two-tier availability, this
+  // is only the global "is bd on PATH" probe, not the per-repo `.beads/` check).
+  beads?: { installed: boolean }
   bitbucket?: { configured: boolean; authenticated: boolean; account: string | null }
   azureDevOps?: {
     configured: boolean
@@ -243,10 +248,11 @@ export async function runPreflightCheck(
     _resetKnownHostsCache()
   }
 
-  const [gitProbe, ghProbe, glabProbe] = await Promise.all([
+  const [gitProbe, ghProbe, glabProbe, bdProbe] = await Promise.all([
     detectCommandRuntime('git', context),
     detectCommandRuntime('gh', context),
-    detectCommandRuntime('glab', context)
+    detectCommandRuntime('glab', context),
+    detectCommandRuntime('bd', context)
   ])
 
   const [ghAuthenticated, glabAuthenticated, bitbucket, azureDevOps, gitea] = await Promise.all([
@@ -261,6 +267,7 @@ export async function runPreflightCheck(
     git: { installed: gitProbe.installed },
     gh: { installed: ghProbe.installed, authenticated: ghAuthenticated },
     glab: { installed: glabProbe.installed, authenticated: glabAuthenticated },
+    beads: { installed: bdProbe.installed },
     bitbucket,
     azureDevOps,
     gitea

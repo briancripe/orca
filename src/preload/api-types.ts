@@ -564,6 +564,10 @@ export type PreflightStatus = {
   /** Optional — older preload payloads predating GitLab support don't
    *  include it. Consumers gate on `glab?.installed` / `authenticated`. */
   glab?: { installed: boolean; authenticated: boolean }
+  /** Optional — same back-compat reason as glab. bd has no hosted auth, so
+   *  this is install-only (global "is bd on PATH", not the per-repo `.beads/`
+   *  check, which is a separate diagnose concern run on the owning host). */
+  beads?: { installed: boolean }
   bitbucket?: { configured: boolean; authenticated: boolean; account: string | null }
   azureDevOps?: {
     configured: boolean
