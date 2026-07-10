@@ -159,6 +159,18 @@ describe('ConnectIntegrationsList', () => {
     expect(markup).not.toContain('Add Linear access')
   })
 
+  it('shows the Beads card as a discovery entry point even without bd installed', async () => {
+    // The task step only renders its provider cards while expanded, so use a
+    // connected code host (review step done) to expand it, same as the
+    // Linear/Jira discoverability test below.
+    installStore(makePreflightStatus({ gh: { installed: true, authenticated: true } }))
+
+    const { markup } = await renderConnectIntegrationsList()
+
+    expect(markup).toContain('Beads')
+    expect(markup).toContain('Not installed')
+  })
+
   it('collapses the task step to its summary when a tracker connects first', async () => {
     installStore(makePreflightStatus())
     if (!storeState.current) {

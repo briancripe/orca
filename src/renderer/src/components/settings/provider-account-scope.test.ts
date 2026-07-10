@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { getExecutionHostLabel } from '../../../../shared/execution-host'
-import { getProviderAccountScope, getProviderRateLimitScope } from './provider-account-scope'
+import {
+  getBeadsHostScope,
+  getProviderAccountScope,
+  getProviderRateLimitScope
+} from './provider-account-scope'
 
 const LOCAL_HOST_LABEL = getExecutionHostLabel('local')
 
@@ -31,6 +35,19 @@ describe('getProviderAccountScope', () => {
       label: 'Remote server: env-1',
       description:
         'GitLab API budget is fetched from the CLI on this remote server. Use Settings > Remote Orca Servers > Advanced to view another default runtime budget.'
+    })
+  })
+
+  it('describes the bd host scope without presuming credentials', () => {
+    expect(getBeadsHostScope({ activeRuntimeEnvironmentId: null })).toEqual({
+      label: LOCAL_HOST_LABEL,
+      description:
+        'bd runs on this desktop client. Use Settings > Remote Orca Servers > Advanced to edit server-owned hosts.'
+    })
+    expect(getBeadsHostScope({ activeRuntimeEnvironmentId: ' env-1 ' })).toEqual({
+      label: 'Remote server: env-1',
+      description:
+        'bd runs on this remote server. Use Settings > Remote Orca Servers > Advanced to edit another default runtime scope.'
     })
   })
 })

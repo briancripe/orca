@@ -6542,7 +6542,9 @@
           "dd67a1b6e1": "在任务源选择器和侧边栏快捷方式中显示 GitLab。",
           "7c5d7fdc20": "GitLab",
           "1db47236cd": "在任务源选择器和侧边栏快捷方式中显示 GitHub。",
-          "e14063e727": "GitHub"
+          "e14063e727": "GitHub",
+          "beads_label": "Beads",
+          "beads_description": "Show Beads in the Tasks source picker and sidebar shortcuts."
         },
         "TerminalAppearanceSection": {
           "a14a427ae4": "窗格分隔线的厚度。",
@@ -7701,7 +7703,9 @@
             "41ccade05c": "gh",
             "b79c21bd42": "GitHub",
             "7166b9090c": "通过 gh CLI 进行 GitHub 身份验证。",
-            "f16e41cc72": "GitHub 集成"
+            "f16e41cc72": "GitHub 集成",
+            "beads_title": "Beads Integration",
+            "beads_description": "Beads (bd) detection via the local CLI."
           }
         },
         "jira": {
@@ -8657,7 +8661,9 @@
           "localMac": "本地 Mac",
           "localCredentials": "此提供商的凭据和账户检查由该桌面客户端拥有。使用“设置 > 远程 Orca 服务器 > 高级”编辑服务器拥有的凭据。",
           "remoteServerRateLimit": "{{value0}} API 预算从此远程服务器上的 CLI 获取。使用“设置 > 远程 Orca 服务器 > 高级”查看另一个默认运行时预算。",
-          "localRateLimit": "{{value0}} API 预算从此桌面客户端上的 CLI 获取。使用“设置 > 远程 Orca 服务器 > 高级”查看服务器拥有的预算。"
+          "localRateLimit": "{{value0}} API 预算从此桌面客户端上的 CLI 获取。使用“设置 > 远程 Orca 服务器 > 高级”查看服务器拥有的预算。",
+          "beadsRemoteHost": "bd runs on this remote server. Use Settings > Remote Orca Servers > Advanced to edit another default runtime scope.",
+          "beadsLocalHost": "bd runs on this desktop client. Use Settings > Remote Orca Servers > Advanced to edit server-owned hosts."
         },
         "settingOwnership": {
           "clientDefault": "客户端默认",
@@ -8903,6 +8909,23 @@
           "reviewFirst": "Review first",
           "singular": "Global saves won't change 1 repository with its own recipe.",
           "tooltipTitle": "Repository overrides"
+        },
+        "beads": {
+          "integration": {
+            "card": {
+              "description_prefix": "Browse and start work from",
+              "bd": "bd",
+              "description_suffix": "issues via the local CLI.",
+              "connected": "Connected",
+              "unavailable": "Unavailable",
+              "not_installed": "Not installed",
+              "host_scope_prefix": "Host scope",
+              "unavailable_copy": "Beads status is not available in this runtime yet.",
+              "recheck": "Re-check",
+              "not_installed_copy": "Install Beads (bd) to browse and start work from its issues.",
+              "install": "Install Beads"
+            }
+          }
         }
       },
       "right": {
