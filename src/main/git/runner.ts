@@ -1577,6 +1577,167 @@ export async function glabExecFileAsync(
   throw lastError
 }
 
+// ─── bd (Beads) CLI runner ──────────────────────────────────────────
+// Why: cloned from glabExecFileAsync above (see that section's header) but
+// simplified for a local, unauthenticated tool: no hostname/rate-limit
+// machinery. bd is repo-scoped via its own `-C <dir>` flag (like `git -C`)
+// rather than process cwd, and its embedded Dolt database serializes writes
+// itself — the only bd failure mode worth an automatic retry is a transient
+// lock/contention error, and only ever for reads (see bdExecFileAsync).
+
+export type BdExecOptions = {
+  cwd?: string
+  wslDistro?: string
+  idempotent?: boolean
+  timeoutMs?: number
+  readonly?: boolean
+  encoding?: BufferEncoding
+  maxBuffer?: number
+  env?: NodeJS.ProcessEnv
+  signal?: AbortSignal
+  /**
+   * Untrusted positional values (issue ids, free-text filters, titles) —
+   * anything that is NOT a code-authored flag/subcommand literal. `args`
+   * (bdExecFileAsync's first parameter) is for the latter only; there is no
+   * other way to get a value into bd's argv. bdExecFileAsync asserts every
+   * element here safe (assertBdArgSafe) *and* appends them after a literal
+   * `--`, so bd's Cobra/pflag parser can never reinterpret one as a flag.
+   */
+  positionals?: string[]
+}
+
+const DEFAULT_BD_EXEC_TIMEOUT_MS = 30_000
+
+// Why: shorter retry budget than gh/glab — a local Dolt lock clears in
+// milliseconds, not the seconds a remote HTTP 5xx might take to recover from.
+const BD_RETRY_DELAYS_MS = [100, 300] as const
+
+/**
+ * Detect a transient Dolt storage-lock/contention error from bd stderr.
+ *
+ * Why: bd's embedded Dolt database can reject a concurrent access attempt
+ * with a lock error under load. That is the only bd failure mode worth an
+ * automatic retry — anything else (bad id, missing database, validation)
+ * will fail again identically. bd-error-classification.ts (a sibling bead)
+ * owns the authoritative, fixture-backed classifier for surfacing errors to
+ * the UI; this local heuristic only gates the runner's own retry decision
+ * and intentionally stays conservative.
+ */
+export function isTransientBdError(stderr: string): boolean {
+  const s = stderr.toLowerCase()
+  return (
+    s.includes('database is locked') ||
+    s.includes('could not acquire lock') ||
+    s.includes('lock wait timeout') ||
+    s.includes('resource temporarily unavailable') ||
+    s.includes('try again later')
+  )
+}
+
+/**
+ * Guard against bd CLI flag/option injection.
+ *
+ * Why: execFile prevents *shell* injection (no shell metacharacter parsing),
+ * but not *option smuggling* — bd's Cobra/pflag argv parser treats any bare
+ * positional value beginning with `-` as another flag rather than data. An
+ * issue id of `--db=/etc/passwd`, passed positionally, is parsed as the
+ * `--db` global flag, not as the id (verified against the real bd 1.1.0
+ * binary: `bd show --db=/etc/passwd` errors "at least one issue ID is
+ * required" — `--db` was silently consumed as the global flag). bd's own
+ * `show --id=<id>` flag exists specifically to work around this for ids
+ * that "look like flags". bdExecFileAsync calls this on every element of
+ * `options.positionals` itself — this export exists for direct unit testing
+ * and is not something callers need to invoke by hand.
+ */
+export function assertBdArgSafe(value: string): string {
+  if (value.startsWith('-')) {
+    throw new Error(
+      `refusing to pass a bd argument that looks like a flag: ${JSON.stringify(value)}`
+    )
+  }
+  return value
+}
+
+function buildBdArgs(args: string[], options: BdExecOptions): string[] {
+  // Why: bd's `-C <dir>` (like `git -C`) is how callers target a repo
+  // instead of relying on process cwd, which the main process does not
+  // meaningfully have. Placed first, mirroring the `git -C <dir> <cmd>`
+  // convention bd's own --help text calls out.
+  const withDirectory = options.cwd ? ['-C', options.cwd, ...args] : args
+  // Why: appended, never merged into caller args — readonly is a runner-level
+  // safety guarantee (reads never contend for the dolt write lock), not
+  // something individual call sites should have to remember.
+  const withReadonly = options.readonly ? [...withDirectory, '--readonly'] : withDirectory
+  if (!options.positionals || options.positionals.length === 0) {
+    return withReadonly
+  }
+  // Why: bd is Cobra/pflag-based, which honors `--` as an explicit
+  // end-of-flags marker (verified against the real binary: `bd show --
+  // --db=x` searches for an issue literally named "--db=x" instead of
+  // consuming --db). Placed after --readonly since --readonly must still
+  // parse as a flag; only what follows `--` is guaranteed-positional.
+  // assertBdArgSafe is redundant defense-in-depth once `--` is present, but
+  // is cheap and catches a caller error immediately instead of letting bd
+  // search for a literal "--foo" id.
+  return [...withReadonly, '--', ...options.positionals.map(assertBdArgSafe)]
+}
+
+function nonInteractiveBdEnv(env: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
+  return {
+    ...env,
+    // Why: the only bd subcommand that reaches $EDITOR is `edit`, which this
+    // runner's callers must never invoke (it hangs a headless process). This
+    // is defense in depth in case that rule is ever violated by mistake.
+    EDITOR: env.EDITOR ?? 'false'
+  }
+}
+
+/**
+ * Async bd (Beads) CLI execution. Drop-in replacement for
+ * `execFileAsync('bd', args, { cwd, encoding, ... })`.
+ *
+ * `args` is for code-authored flags/subcommand literals only (e.g.
+ * `['show']`, `['list', '--status', 'open']`) — never an externally-sourced
+ * value. Pass those through `options.positionals` instead; this function
+ * validates and `--`-terminates them before they ever reach bd's argv (see
+ * assertBdArgSafe / buildBdArgs), so a hostile id can't smuggle a flag in
+ * regardless of how it's called.
+ *
+ * Retries a transient Dolt lock error only when `options.idempotent` is
+ * true — writes (`bd create`, etc.) are never safe to auto-retry, since a
+ * retry after the server already applied the write would duplicate it.
+ */
+export async function bdExecFileAsync(
+  args: string[],
+  options: BdExecOptions = {}
+): Promise<{ stdout: string; stderr: string }> {
+  const resolved = resolveCommand('bd', buildBdArgs(args, options), options.cwd, options.wslDistro)
+  let lastError: unknown
+  for (let attempt = 0; attempt <= BD_RETRY_DELAYS_MS.length; attempt++) {
+    try {
+      const { stdout, stderr } = await execFileCapture(resolved.binary, resolved.args, {
+        cwd: resolved.cwd,
+        encoding: (options.encoding ?? 'utf-8') as BufferEncoding,
+        maxBuffer: options.maxBuffer,
+        timeout: options.timeoutMs ?? DEFAULT_BD_EXEC_TIMEOUT_MS,
+        env: nonInteractiveBdEnv(options.env),
+        signal: options.signal
+      })
+      return { stdout: stdout as string, stderr: stderr as string }
+    } catch (err) {
+      lastError = err
+      const { stderr } = extractExecError(err)
+      const isLastAttempt = attempt >= BD_RETRY_DELAYS_MS.length
+      if (options.idempotent && !isLastAttempt && isTransientBdError(stderr)) {
+        await sleep(BD_RETRY_DELAYS_MS[attempt])
+        continue
+      }
+      throw err
+    }
+  }
+  throw lastError
+}
+
 // ─── Generic command runner (for rg, etc.) ──────────────────────────
 
 /**
