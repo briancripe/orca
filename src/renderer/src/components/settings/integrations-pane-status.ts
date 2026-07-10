@@ -7,7 +7,16 @@ export type GlabStatus = GhStatus
 export type BitbucketStatus = 'checking' | 'connected' | 'not-configured' | 'not-authenticated'
 export type AzureDevOpsStatus = 'checking' | 'configured' | 'not-configured' | 'not-authenticated'
 export type GiteaStatus = 'checking' | 'configured' | 'not-configured' | 'not-authenticated'
-export type PreflightRefreshProvider = 'gh' | 'glab' | 'bitbucket' | 'azureDevOps' | 'gitea'
+// Why: bd has no hosted auth (see PreflightStatus['beads']), so unlike
+// GhStatus there's no "not-authenticated" — just installed or not.
+export type BeadsStatus = 'checking' | 'connected' | 'not-installed'
+export type PreflightRefreshProvider =
+  | 'gh'
+  | 'glab'
+  | 'bitbucket'
+  | 'azureDevOps'
+  | 'gitea'
+  | 'beads'
 
 export type PreflightIntegrationStatuses = {
   ghStatus: GhStatus
@@ -20,6 +29,7 @@ export type PreflightIntegrationStatuses = {
   giteaStatus: GiteaStatus
   giteaAccount: string | null
   giteaBaseUrl: string | null
+  beadsStatus: BeadsStatus
 }
 
 type TokenApiPreflightStatus = {
@@ -84,6 +94,10 @@ function bitbucketStatusFromPreflight(status: PreflightStatus['bitbucket']): Bit
   return status.authenticated ? 'connected' : 'not-authenticated'
 }
 
+function beadsStatusFromPreflight(status: PreflightStatus['beads']): BeadsStatus {
+  return status?.installed ? 'connected' : 'not-installed'
+}
+
 function maybeChecking<T extends string>(
   provider: PreflightRefreshProvider,
   refreshingProviders: ReadonlySet<PreflightRefreshProvider>,
@@ -107,7 +121,8 @@ export function getPreflightIntegrationStatuses(
       azureDevOpsBaseUrl: null,
       giteaStatus: 'checking',
       giteaAccount: null,
-      giteaBaseUrl: null
+      giteaBaseUrl: null,
+      beadsStatus: 'checking'
     }
   }
 
@@ -136,6 +151,11 @@ export function getPreflightIntegrationStatuses(
     azureDevOpsBaseUrl: azureDevOps?.baseUrl ?? null,
     giteaStatus: maybeChecking('gitea', refreshingProviders, giteaStatusFromPreflight(gitea)),
     giteaAccount: gitea?.account ?? null,
-    giteaBaseUrl: gitea?.baseUrl ?? null
+    giteaBaseUrl: gitea?.baseUrl ?? null,
+    beadsStatus: maybeChecking(
+      'beads',
+      refreshingProviders,
+      beadsStatusFromPreflight(preflightStatus.beads)
+    )
   }
 }

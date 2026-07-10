@@ -6557,7 +6557,9 @@
           "dd67a1b6e1": "Muestra GitLab en el selector de fuentes de Tareas y en los accesos directos de la barra lateral.",
           "7c5d7fdc20": "GitLab",
           "1db47236cd": "Muestra GitHub en el selector de fuentes de Tareas y en los accesos directos de la barra lateral.",
-          "e14063e727": "GitHub"
+          "e14063e727": "GitHub",
+          "beads_label": "Beads",
+          "beads_description": "Show Beads in the Tasks source picker and sidebar shortcuts."
         },
         "TerminalAppearanceSection": {
           "a14a427ae4": "Grosor de la línea divisoria del panel.",
@@ -7716,7 +7718,9 @@
             "41ccade05c": "gh",
             "b79c21bd42": "github",
             "7166b9090c": "Autenticación de GitHub a través de la CLI de gh.",
-            "f16e41cc72": "Integración de GitHub"
+            "f16e41cc72": "Integración de GitHub",
+            "beads_title": "Beads Integration",
+            "beads_description": "Beads (bd) detection via the local CLI."
           }
         },
         "jira": {
@@ -8657,7 +8661,9 @@
           "localMac": "Local Mac",
           "localCredentials": "Las credenciales y comprobaciones de cuenta de este proveedor pertenecen a este cliente de escritorio. Usa Configuración > Servidores Orca remotos > Avanzado para editar credenciales propiedad del servidor.",
           "remoteServerRateLimit": "El presupuesto de API de {{value0}} se obtiene desde la CLI en este servidor remoto. Usa Configuración > Servidores Orca remotos > Avanzado para ver otro presupuesto de runtime predeterminado.",
-          "localRateLimit": "El presupuesto de API de {{value0}} se obtiene desde la CLI en este cliente de escritorio. Usa Configuración > Servidores Orca remotos > Avanzado para ver presupuestos propiedad del servidor."
+          "localRateLimit": "El presupuesto de API de {{value0}} se obtiene desde la CLI en este cliente de escritorio. Usa Configuración > Servidores Orca remotos > Avanzado para ver presupuestos propiedad del servidor.",
+          "beadsRemoteHost": "bd runs on this remote server. Use Settings > Remote Orca Servers > Advanced to edit another default runtime scope.",
+          "beadsLocalHost": "bd runs on this desktop client. Use Settings > Remote Orca Servers > Advanced to edit server-owned hosts."
         },
         "settingOwnership": {
           "clientDefault": "Predeterminado del cliente",
@@ -8903,6 +8909,23 @@
           "reviewFirst": "Revisar primero",
           "singular": "Guardar a nivel global no cambiará 1 repositorio con su propia receta.",
           "tooltipTitle": "Anulaciones de repositorio"
+        },
+        "beads": {
+          "integration": {
+            "card": {
+              "description_prefix": "Browse and start work from",
+              "bd": "bd",
+              "description_suffix": "issues via the local CLI.",
+              "connected": "Connected",
+              "unavailable": "Unavailable",
+              "not_installed": "Not installed",
+              "host_scope_prefix": "Host scope",
+              "unavailable_copy": "Beads status is not available in this runtime yet.",
+              "recheck": "Re-check",
+              "not_installed_copy": "Install Beads (bd) to browse and start work from its issues.",
+              "install": "Install Beads"
+            }
+          }
         }
       },
       "right": {

@@ -205,5 +205,23 @@ export const getIntegrationsPaneSearchEntries = createLocalizedCatalog(() => [
         'disconnect'
       )
     ]
+  },
+  {
+    title: translate(
+      'auto.components.settings.integrations.search.beads_title',
+      'Beads Integration'
+    ),
+    description: translate(
+      'auto.components.settings.integrations.search.beads_description',
+      'Beads (bd) detection via the local CLI.'
+    ),
+    keywords: [
+      ...translateSearchKeyword('auto.components.settings.integrations.search.beads', 'beads'),
+      ...translateSearchKeyword('auto.components.settings.integrations.search.bd', 'bd'),
+      ...translateSearchKeyword(
+        'auto.components.settings.integrations.search.c450244ad7',
+        'integration'
+      )
+    ]
   }
 ])
