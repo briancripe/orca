@@ -335,7 +335,9 @@ export default function SmartWorkspaceNameField({
     () =>
       filterAvailableTaskProviders(['github', 'gitlab', 'linear'], {
         gitlabInstalled: gitlabSourceAvailable,
-        linearConnected: linearStatus.connected === true
+        linearConnected: linearStatus.connected === true,
+        // Why: bd-installed detection lands in a later slice (orca-0cc.4).
+        beadsInstalled: false
       }),
     [gitlabSourceAvailable, linearStatus.connected]
   )

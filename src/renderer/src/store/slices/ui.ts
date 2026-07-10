@@ -1269,7 +1269,9 @@ export const createUISlice: StateCreator<AppState, [], [], UISlice> = (set, get)
       preferredVisibleTaskProviders,
       {
         gitlabInstalled: state.preflightStatus?.glab?.installed === true,
-        linearConnected: state.linearStatus?.connected === true
+        linearConnected: state.linearStatus?.connected === true,
+        // Why: bd-installed detection lands in a later slice (orca-0cc.4).
+        beadsInstalled: false
       },
       state.settings?.defaultTaskSource
     )
