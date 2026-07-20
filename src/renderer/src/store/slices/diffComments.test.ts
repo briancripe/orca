@@ -118,6 +118,7 @@ import { createHostedReviewSlice } from './hosted-review'
 import { createLinearSlice } from './linear'
 import { createPreflightSlice } from './preflight'
 import { createJiraSlice } from './jira'
+import { createBeadsSlice } from './beads'
 import { createEditorSlice } from './editor'
 import { createStatsSlice } from './stats'
 import { createMemorySlice } from './memory'
@@ -158,6 +159,7 @@ function createTestStore() {
     ...createLinearSlice(...a),
     ...createPreflightSlice(...a),
     ...createJiraSlice(...a),
+    ...createBeadsSlice(...a),
     ...createEditorSlice(...a),
     ...createStatsSlice(...a),
     ...createMemorySlice(...a),
