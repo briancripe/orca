@@ -50,6 +50,7 @@ export type WorkspaceIntentWorkItem = {
   provider?: 'github' | 'gitlab' | 'linear' | 'jira' | 'beads'
   linearIdentifier?: string
   jiraIdentifier?: string
+  beadsIdentifier?: string
 }
 
 export type WorkspaceIntentName = {
@@ -141,7 +142,7 @@ function escapeRegExp(input: string): string {
 }
 
 function compactWorkItemTitle(title: string, item: WorkspaceIntentWorkItem): string {
-  const identifier = item.linearIdentifier ?? item.jiraIdentifier
+  const identifier = item.linearIdentifier ?? item.jiraIdentifier ?? item.beadsIdentifier
   let withoutPrefix = title
     .trim()
     .replace(/^(?:issue|pr|pull request|mr|merge request)\s*[#!]?\d+\s*[:-]\s*/i, '')
@@ -166,6 +167,11 @@ function workItemIdentity(item: WorkspaceIntentWorkItem): string {
   if (item.jiraIdentifier) {
     return item.jiraIdentifier.toUpperCase()
   }
+  if (item.beadsIdentifier) {
+    // Why: beads issue IDs are canonical lowercase (e.g. `orca-42`); upper-casing
+    // like Linear/Jira would misrepresent the id.
+    return item.beadsIdentifier
+  }
   if (item.type === 'pr') {
     return `PR ${item.number}`
   }
@@ -178,7 +184,7 @@ function workItemIdentity(item: WorkspaceIntentWorkItem): string {
 export function getLinkedWorkItemWorkspaceName(
   item: WorkspaceIntentWorkItem
 ): WorkspaceIntentName | null {
-  const identifier = item.linearIdentifier ?? item.jiraIdentifier
+  const identifier = item.linearIdentifier ?? item.jiraIdentifier ?? item.beadsIdentifier
   let subject = getLinkedWorkItemTitleSubject(item) || item.title.trim()
   if (identifier) {
     subject = subject
@@ -255,6 +261,17 @@ export function getLinearIssueWorkspaceName(issue: { identifier: string; title: 
     dedupedTitleSlug = titleSlug.slice(key.length + 1)
   }
   return slugifyForWorkspaceName([key, dedupedTitleSlug].filter(Boolean).join('-'))
+}
+
+export function getBeadsIssueWorkspaceSeed(issue: { id: string; title: string }): string {
+  const resolved = getLinkedWorkItemWorkspaceName({
+    type: 'issue',
+    number: 0,
+    title: issue.title,
+    provider: 'beads',
+    beadsIdentifier: issue.id
+  })
+  return resolved?.seedName ?? slugifyForWorkspaceName(issue.id)
 }
 
 export function resolveWorkspaceCreateName(args: {

@@ -192,7 +192,11 @@ import {
   normalizeTaskSourceContext,
   type TaskSourceContext
 } from '../../../shared/task-source-context'
-import { getLinearIssueWorkspaceName } from '../../../shared/workspace-name'
+import {
+  getBeadsIssueWorkspaceSeed,
+  getLinearIssueWorkspaceName
+} from '../../../shared/workspace-name'
+import { toBeadsLinkedWorkItem } from '@/components/sidebar/folder-workspace-composer-helpers'
 import {
   buildTaskPageRepoSourceState,
   deriveTaskPageGitHubWorkItemsFetchOptions,
@@ -8129,6 +8133,21 @@ export default function TaskPage(): React.JSX.Element {
     [openComposerForJiraItem]
   )
 
+  const handleStartWorkFromBeads = useCallback(
+    (issue: { id: string; title: string }): void => {
+      // Why: mirror the Jira/Linear "start work" flow — open the New Workspace
+      // dialog pre-filled with a beads-linked task (url '' since beads has no
+      // hosted page) rather than yolo-creating the worktree.
+      useAppStore.getState().recordFeatureInteraction('beads-tasks')
+      openModal('new-workspace-composer', {
+        linkedWorkItem: toBeadsLinkedWorkItem(issue),
+        prefilledName: getBeadsIssueWorkspaceSeed(issue),
+        telemetrySource: 'sidebar'
+      })
+    },
+    [openModal]
+  )
+
   const handleJiraConnect = useCallback(async (): Promise<void> => {
     const siteUrl = jiraSiteUrlDraft.trim()
     const email = jiraEmailDraft.trim()
@@ -9266,7 +9285,7 @@ export default function TaskPage(): React.JSX.Element {
 
           {taskSource === 'beads' ? (
             <div className="mt-3 flex min-h-0 min-w-0 max-h-full flex-1 flex-col">
-              <BeadsTaskSurface ctx={beadsRepoContext} />
+              <BeadsTaskSurface ctx={beadsRepoContext} onStartWork={handleStartWorkFromBeads} />
             </div>
           ) : taskSource === 'github' && dialogWorkItem ? (
             dialogWorkItem.type === 'pr' ? (

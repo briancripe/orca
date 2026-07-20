@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  buildBeadsWorkspaceSource,
   buildLinearWorkspaceSource,
   buildWorkspaceSourceSelection,
   getWorkspaceSourceName,
@@ -41,6 +42,34 @@ describe('workspace source policy', () => {
         url: 'https://github.com/o/r/issues/1'
       })
     ).toBe(false)
+  })
+
+  it('builds a beads source with an empty url and infers the beads provider', () => {
+    const beads = buildBeadsWorkspaceSource({ id: 'orca-42', title: 'Add beads provider' })
+    expect(beads).toEqual({
+      provider: 'beads',
+      type: 'issue',
+      number: 0,
+      title: 'Add beads provider',
+      url: '',
+      beadsIdentifier: 'orca-42'
+    })
+    // Repo-scoped like GitHub/GitLab — must not survive a repo change.
+    expect(shouldPreserveWorkspaceSourceOnRepoChange(beads)).toBe(false)
+    // Identifier-only inference must win over the number-0 → linear sentinel.
+    expect(
+      getWorkspaceSourceProvider({
+        type: 'issue',
+        number: 0,
+        title: 'Add beads provider',
+        url: '',
+        beadsIdentifier: 'orca-42'
+      })
+    ).toBe('beads')
+    expect(getWorkspaceSourceName(beads)).toEqual({
+      seedName: 'orca-42-add-beads-provider',
+      displayName: 'orca-42 Add beads provider'
+    })
   })
 
   it('shares provider inference, selection labels, and auto-name gates', () => {

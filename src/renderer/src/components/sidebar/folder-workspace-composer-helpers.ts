@@ -1,5 +1,6 @@
 import type { LinkedWorkItemSummary } from '@/lib/new-workspace'
 import {
+  buildBeadsWorkspaceSource,
   buildGitHubWorkspaceSource,
   buildGitLabWorkspaceSource,
   buildLinearWorkspaceSource,
@@ -75,6 +76,7 @@ export function toFolderWorkspaceLinkedTask(
     url: item.url,
     ...(item.linearIdentifier ? { linearIdentifier: item.linearIdentifier } : {}),
     ...(item.jiraIdentifier ? { jiraIdentifier: item.jiraIdentifier } : {}),
+    ...(item.beadsIdentifier ? { beadsIdentifier: item.beadsIdentifier } : {}),
     ...(item.repoId ? { repoId: item.repoId } : {})
   }
 }
@@ -99,6 +101,10 @@ export function toGitLabLinkedWorkItem(item: GitLabWorkItem): LinkedWorkItemSumm
 
 export function toLinearLinkedWorkItem(issue: LinearIssue): LinkedWorkItemSummary {
   return buildLinearWorkspaceSource(issue)
+}
+
+export function toBeadsLinkedWorkItem(issue: { id: string; title: string }): LinkedWorkItemSummary {
+  return buildBeadsWorkspaceSource(issue)
 }
 
 export function getFolderWorkspacePrimaryActionLabel(): string {

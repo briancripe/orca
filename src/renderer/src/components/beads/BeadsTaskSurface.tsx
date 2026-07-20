@@ -1,6 +1,7 @@
 import React from 'react'
 import { translate } from '@/i18n/i18n'
 import type { BeadsRepoContext } from '@/store/slices/beads-cache'
+import type { BeadsIssueInfo } from '../../../../shared/beads-types'
 import { hasActiveBeadsFilters } from './beads-filter-model'
 import { BeadsFilterBar } from './BeadsFilterBar'
 import { BeadsWorkItemList } from './BeadsWorkItemList'
@@ -13,7 +14,13 @@ import { useBeadsTaskSurface } from './use-beads-task-surface'
 // Why: the whole beads tab body lives here so TaskPage only wires the tab
 // (a single `taskSource === 'beads'` branch) rather than growing its already
 // oversized render with beads-specific filters / list / dialog state.
-export function BeadsTaskSurface({ ctx }: { ctx: BeadsRepoContext | null }): React.JSX.Element {
+export function BeadsTaskSurface({
+  ctx,
+  onStartWork
+}: {
+  ctx: BeadsRepoContext | null
+  onStartWork?: (issue: BeadsIssueInfo) => void
+}): React.JSX.Element {
   const model = useBeadsTaskSurface(ctx)
 
   if (!ctx) {
@@ -73,6 +80,7 @@ export function BeadsTaskSurface({ ctx }: { ctx: BeadsRepoContext | null }): Rea
         onAddComment={model.addComment}
         onCloseIssue={model.closeIssue}
         onReopenIssue={model.reopenIssue}
+        onStartWork={onStartWork}
         dependencySlot={
           model.issueDetail ? (
             <BeadsDependencyEditor

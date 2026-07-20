@@ -35,8 +35,45 @@ describe('getLinkedWorkItemProvider', () => {
         linearIdentifier: 'ENG-123'
       },
       'linear'
+    ],
+    [
+      'explicit beads provider metadata',
+      {
+        type: 'issue',
+        provider: 'beads',
+        number: 0,
+        title: 'Add Beads provider',
+        url: '',
+        beadsIdentifier: 'orca-0cc.16'
+      },
+      'beads'
+    ],
+    [
+      'beads inferred from identifier only',
+      {
+        type: 'issue',
+        number: 0,
+        title: 'Add Beads provider',
+        url: '',
+        beadsIdentifier: 'orca-42'
+      },
+      'beads'
     ]
   ] as const)('detects %s', (_label, item, provider) => {
     expect(getLinkedWorkItemProvider(item)).toBe(provider)
+  })
+
+  it('does not fall through to the legacy Linear sentinel when a beads identifier is set', () => {
+    // Why: a beads item carries number 0 and an empty url, which would otherwise
+    // match the `number === 0 && !github.com` → linear heuristic.
+    expect(
+      getLinkedWorkItemProvider({
+        type: 'issue',
+        number: 0,
+        title: 'Add Beads provider',
+        url: '',
+        beadsIdentifier: 'orca-42'
+      })
+    ).not.toBe('linear')
   })
 })
