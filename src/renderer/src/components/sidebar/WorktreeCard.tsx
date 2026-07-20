@@ -23,6 +23,7 @@ import CacheTimer, { usePromptCacheCountdownStartedAt } from './CacheTimer'
 import WorktreeContextMenu from './WorktreeContextMenu'
 import { SshDisconnectedDialog } from './SshDisconnectedDialog'
 import { AutoRenameFailedDialog } from './AutoRenameFailedDialog'
+import { LinearAgentSkillSetupPrompt } from './LinearAgentSkillSetupPrompt'
 import WorktreeCardAgents from './WorktreeCardAgents'
 import { useWorktreeAgentRows } from './useWorktreeAgentRows'
 import { WorktreeCardStatusSlot } from './WorktreeCardStatusSlot'
@@ -1727,6 +1728,15 @@ const WorktreeCard = React.memo(function WorktreeCard({
           </div>
         )}
 
+        {isActive && worktree.linkedLinearIssue ? (
+          <LinearAgentSkillSetupPrompt
+            linked
+            remote={Boolean(repo?.connectionId || settings?.activeRuntimeEnvironmentId?.trim())}
+            surface="modal"
+            settings={settings}
+          />
+        ) : null}
+
         {/* Why: inline agent list. Gated on the 'inline-agents' card
              property so users can hide it. Layout coupling: this block
              grows the card height dynamically — WorktreeList uses
@@ -1931,6 +1941,7 @@ const WorktreeCard = React.memo(function WorktreeCard({
           <AutoRenameFailedDialog
             open={showRenameErrorDialog}
             onOpenChange={setShowRenameErrorDialog}
+            worktreeId={worktree.id}
             worktreeName={worktree.displayName}
             error={worktree.firstAgentMessageRenameError}
           />

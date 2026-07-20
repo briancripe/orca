@@ -7,6 +7,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type SetStateAction
 } from 'react'
 import { lazyWithRetry as lazy } from '@/lib/lazy-with-retry'
@@ -127,8 +128,11 @@ import {
   timeRendererStartupStep,
   timeRendererStartupSyncStep
 } from './startup/startup-diagnostics'
+import { reconnectSshTargetForRendererStartup } from './startup/ssh-startup-reconnect'
 import { shouldRenderPetOverlay } from './components/pet/pet-overlay-visibility'
 import { applyDocumentTheme } from './lib/document-theme'
+import { getSystemPrefersDark } from './lib/terminal-theme'
+import { publishTerminalViewAttributesAtAppStart } from './components/terminal-pane/terminal-appearance'
 import { isEditableTarget } from './lib/editable-target'
 import { getSelectedTextForFileSearch } from './lib/file-search-selection'
 import { useShortcutLabel } from './hooks/useShortcutLabel'
@@ -170,6 +174,15 @@ import { showTerminalShortcutCaptureNotification } from '@/lib/terminal-shortcut
 import { resolveMountedLazyModalIds, type LazyModalId } from './lazy-modal-mount-state'
 import { translate } from '@/i18n/i18n'
 import PinnedTabCloseDialog from './components/terminal-pane/PinnedTabCloseDialog'
+import {
+  hasRequestedBackgroundTerminalWorktreeMount,
+  subscribeBackgroundTerminalWorktreeMountRequests
+} from './components/terminal/background-terminal-worktree-mount'
+
+// Why: agents alive during a hard kill (crash, forced update install) need a
+// reasonably fresh resume record on disk; one minute bounds the lost window
+// without measurable per-tick cost (the capture skips unchanged records).
+const SLEEPING_AGENT_RESUME_CAPTURE_INTERVAL_MS = 60_000
 
 const isMac = navigator.userAgent.includes('Mac')
 const isWindows = !isMac && navigator.userAgent.includes('Windows')
@@ -481,6 +494,11 @@ function App(): React.JSX.Element {
   const worktreeSidebarScrollAnchorRef = useRef<VirtualizedScrollAnchor>(null)
   const floatingVisibleTabCount = useAppStore(selectFloatingVisibleTabCount)
   const workspaceSessionReady = useAppStore((s) => s.workspaceSessionReady)
+  const backgroundTerminalMountRequested = useSyncExternalStore(
+    subscribeBackgroundTerminalWorktreeMountRequests,
+    hasRequestedBackgroundTerminalWorktreeMount,
+    hasRequestedBackgroundTerminalWorktreeMount
+  )
   const keybindings = useAppStore((s) => s.keybindings)
   const updateStatus = useAppStore((s) => s.updateStatus)
   const activeContextualTourId = useAppStore((s) => s.activeContextualTourId)
@@ -497,14 +515,16 @@ function App(): React.JSX.Element {
     floatingTerminalEnabled &&
     (floatingTerminalTriggerLocation === 'floating-button' || !statusBarVisible)
   const hasMountedTerminalWorkbenchRef = useRef(false)
-  if (activeWorktreeId !== null) {
+  if (activeWorktreeId !== null || backgroundTerminalMountRequested) {
     hasMountedTerminalWorkbenchRef.current = true
   }
   // Why: skip the terminal bundle on the no-workspace landing path, but once a
   // workspace has mounted, keep Terminal-owned hidden panes alive through sleep
   // and shutdown transitions where activeWorktreeId can briefly become null.
   const shouldMountTerminalWorkbench =
-    activeWorktreeId !== null || hasMountedTerminalWorkbenchRef.current
+    activeWorktreeId !== null ||
+    backgroundTerminalMountRequested ||
+    hasMountedTerminalWorkbenchRef.current
   // Why: visible worktree creation owns its faux tab strip from start to finish;
   // the previous workspace must stay mounted for retention without rendering
   // real chrome.
@@ -874,6 +894,14 @@ function App(): React.JSX.Element {
         // Load settings first so a persisted remote runtime does not boot against
         // the local filesystem and then hydrate stale local workspace state.
         await timeRendererStartupStep('fetch-settings', () => actions.fetchSettings())
+        // Why here: hidden-at-launch PTYs (background terminal reconnects,
+        // agent sessions) can query OSC 10/11 before any terminal pane mounts
+        // and main's responder is silent-until-first-push. Publish composed
+        // view attributes as soon as settings exist, before any spawn below.
+        publishTerminalViewAttributesAtAppStart(
+          useAppStore.getState().settings,
+          getSystemPrefersDark()
+        )
         // Why: keybindings + onboarding are main-side reads with no dependency
         // on the catalog/session steps below, so start them now and await them
         // at their original positions — the round-trips overlap the local
@@ -1003,25 +1031,21 @@ function App(): React.JSX.Element {
               await timeRendererStartupStep(
                 'ssh-reconnect',
                 () =>
-                  Promise.allSettled(
-                    eagerTargets.map(({ targetId }) =>
-                      Promise.race([
-                        window.api.ssh.connect({ targetId }),
-                        new Promise((_, reject) =>
-                          setTimeout(
-                            () => reject(new Error('SSH reconnect timeout')),
-                            SSH_RECONNECT_TIMEOUT_MS
-                          )
-                        )
-                      ]).catch((err) => {
-                        const isTimeout =
-                          err instanceof Error && err.message === 'SSH reconnect timeout'
-                        if (isTimeout) {
-                          timedOutTargets.push(targetId)
+                  Promise.all(
+                    eagerTargets.map(async ({ targetId }) => {
+                      const result = await reconnectSshTargetForRendererStartup({
+                        targetId,
+                        timeoutMs: SSH_RECONNECT_TIMEOUT_MS,
+                        connect: (id) => window.api.ssh.connect({ targetId: id }),
+                        publishState: actions.setSshConnectionState,
+                        onFailure: (id, error) => {
+                          console.warn(`SSH auto-reconnect failed for ${id}:`, error)
                         }
-                        console.warn(`SSH auto-reconnect failed for ${targetId}:`, err)
                       })
-                    )
+                      if (result.timedOut) {
+                        timedOutTargets.push(targetId)
+                      }
+                    })
                   ),
                 {
                   eagerTargets: eagerTargets.length,
@@ -1035,11 +1059,9 @@ function App(): React.JSX.Element {
                 ])
               }
 
-              // Why: ssh.connect() resolves before the ssh:state-changed IPC
-              // event updates sshConnectionStates in the store. Without this,
-              // reconnectPersistedTerminals reads stale state and misclassifies
-              // successfully connected targets as disconnected, stranding their
-              // persisted PTYs. Polling getState ensures the store is current.
+              // Why: connect's returned state is published above, but older or
+              // wrapped providers may return no state. Poll main once as a
+              // compatibility fallback before terminal restoration.
               for (const { targetId } of eagerTargets) {
                 if (timedOutTargets.includes(targetId)) {
                   continue
@@ -1124,7 +1146,7 @@ function App(): React.JSX.Element {
           // UI writer and clobber ui.json (sidebar width, sort, filters, etc.).
           const fallbackUI = getStartupErrorFallbackUI(uiHydrated)
           if (fallbackUI) {
-            actions.hydratePersistedUI(fallbackUI)
+            actions.hydratePersistedUI(fallbackUI, 'startup')
           }
           // Why (issue #1158): surface a sticky, dismissible toast so the
           // user knows they're in degraded "no-save" mode. Without this, every
@@ -1353,6 +1375,22 @@ function App(): React.JSX.Element {
     return () => window.removeEventListener('beforeunload', captureAndFlush)
   }, [])
 
+  // Why: beforeunload never fires on a hard kill (crash, forced update
+  // install, TerminateProcess), so agents alive at that moment would leave no
+  // resume record. This periodic capture stores only agent session ids — not
+  // scrollback, see the no-periodic-scrollback note below — and the store
+  // action skips unchanged records, so idle ticks write nothing; real changes
+  // flow through the debounced session-write subscriber.
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      if (!shouldPersistWorkspaceSession(useAppStore.getState())) {
+        return
+      }
+      useAppStore.getState().captureAllSleepingAgentSessions()
+    }, SLEEPING_AGENT_RESUME_CAPTURE_INTERVAL_MS)
+    return () => window.clearInterval(timer)
+  }, [])
+
   // Own the single window-close-request subscription at the always-mounted App
   // root. Why: the rich confirmation flow lives in Terminal, which is not
   // mounted on the no-workspace landing page (and is lazy-loaded elsewhere), so
@@ -1398,6 +1436,10 @@ function App(): React.JSX.Element {
         hideAutomationGeneratedWorkspaces,
         showDotfilesByWorktree,
         filterRepoIds,
+        // Why: persist the active view so a reload restores it. openTaskPage etc.
+        // mutate activeView directly (not via setActiveView), so the value-keyed
+        // writer is what catches every transition.
+        activeView,
         // Why: rides the same debounced save so dashboard auto-acks (which fire
         // on focus/visibility) and the in-memory ack cleanup paths in
         // agent-status.ts (close/dismiss) both flow to disk through map
@@ -1424,6 +1466,7 @@ function App(): React.JSX.Element {
     hideAutomationGeneratedWorkspaces,
     showDotfilesByWorktree,
     filterRepoIds,
+    activeView,
     acknowledgedAgentsByPaneKey
   ])
 

@@ -1192,7 +1192,11 @@ describe('GitHandler', () => {
       await Promise.all([first, second])
 
       expect(gitBufferSpy).toHaveBeenCalledTimes(2)
-      expect(gitSpy).toHaveBeenCalledWith(['add', '--', 'src/file.ts'], tmpDir)
+      expect(gitSpy).toHaveBeenCalledWith(['add', '--', ':(literal)src/file.ts'], tmpDir)
+      const submodulePathReads = gitSpy.mock.calls.filter(
+        ([args]) => args[0] === 'config' && args.includes('.gitmodules')
+      )
+      expect(submodulePathReads).toHaveLength(2)
     })
 
     it('clears pending git.diff reads when a narrow ref fetch runs', async () => {
@@ -1222,7 +1226,8 @@ describe('GitHandler', () => {
         worktreePath: tmpDir,
         remote: 'origin',
         branch: 'main',
-        ref: 'refs/remotes/origin/main'
+        ref: 'refs/remotes/origin/main',
+        skipAutoMaintenance: true
       })
 
       const second = dispatcher.callRequest('git.diff', {
@@ -1238,7 +1243,18 @@ describe('GitHandler', () => {
 
       expect(gitBufferSpy).toHaveBeenCalledTimes(2)
       expect(gitSpy).toHaveBeenCalledWith(
-        ['fetch', '--no-tags', 'origin', '+refs/heads/main:refs/remotes/origin/main'],
+        [
+          '-c',
+          'maintenance.auto=false',
+          '-c',
+          'maintenance.commit-graph.auto=0',
+          '-c',
+          'gc.auto=0',
+          'fetch',
+          '--no-tags',
+          'origin',
+          '+refs/heads/main:refs/remotes/origin/main'
+        ],
         tmpDir
       )
     })
