@@ -13181,5 +13181,125 @@
         }
       }
     }
+  },
+  "beads": {
+    "section": {
+      "comments": "Comments",
+      "dependencies": "Dependencies",
+      "description": "Description",
+      "design": "Design",
+      "acceptanceCriteria": "Acceptance criteria",
+      "notes": "Notes",
+      "empty": "None"
+    },
+    "comments": {
+      "empty": "No comments yet.",
+      "composerAria": "Add a comment",
+      "placeholder": "Add a comment…",
+      "submit": "Comment"
+    },
+    "create": {
+      "title": "New Beads issue",
+      "titleAria": "Title",
+      "titlePlaceholder": "Title",
+      "descriptionAria": "Description",
+      "descriptionPlaceholder": "Description",
+      "typeAria": "Type",
+      "typePlaceholder": "Type",
+      "priorityAria": "Priority",
+      "assigneeAria": "Assignee",
+      "assigneePlaceholder": "Assignee",
+      "labelsAria": "Labels (comma separated)",
+      "labelsPlaceholder": "label-a, label-b",
+      "cancel": "Cancel",
+      "submit": "Create issue"
+    },
+    "dependencies": {
+      "empty": "No dependencies."
+    },
+    "filter": {
+      "ready": "Ready",
+      "type": "Type",
+      "typeAria": "Filter by type",
+      "label": "Label",
+      "labelAria": "Filter by label",
+      "assignee": "Assignee",
+      "assigneeAria": "Filter by assignee"
+    },
+    "action": {
+      "refresh": "Refresh Beads issues",
+      "newIssue": "New issue"
+    },
+    "dialog": {
+      "description": "Beads issue details",
+      "loadError": "Could not load this Beads issue.",
+      "save": "Save",
+      "cancel": "Cancel",
+      "edit": "Edit",
+      "close": "Close details",
+      "titleAria": "Issue title",
+      "typeAria": "Issue type",
+      "typePlaceholder": "Type",
+      "priorityAria": "Priority",
+      "assigneeAria": "Assignee",
+      "assigneePlaceholder": "Assignee",
+      "labelsAria": "Labels (comma separated)",
+      "labelsPlaceholder": "label-a, label-b",
+      "closeReasonAria": "Close reason (optional)",
+      "closeReason": "Reason (optional)",
+      "confirmClose": "Close issue",
+      "reopen": "Reopen",
+      "closeIssue": "Close issue"
+    },
+    "list": {
+      "error": "Could not load Beads issues for this repository.",
+      "emptyFiltered": "No issues match the current filters.",
+      "empty": "No Beads issues yet. Create one to get started."
+    },
+    "guidance": {
+      "bdMissing": {
+        "title": "Beads (bd) is not installed",
+        "body": "Install the bd binary and make sure it is on PATH to browse and manage Beads issues here."
+      },
+      "uninitialized": {
+        "title": "This repository has no Beads store",
+        "body": "Run `bd init` in this repository to create its Beads store, then reload."
+      }
+    },
+    "surface": {
+      "noRepo": "Select a repository to browse its Beads issues."
+    },
+    "column": {
+      "id": "Pri / ID",
+      "title": "Title",
+      "status": "Status / Type",
+      "updated": "Updated"
+    },
+    "dep": {
+      "blocks": "Blocked by",
+      "parentChild": "Parent / child",
+      "related": "Related",
+      "relatesTo": "Relates to",
+      "discoveredFrom": "Discovered from",
+      "duplicates": "Duplicates",
+      "supersedes": "Supersedes"
+    },
+    "status": {
+      "open": "Open",
+      "in_progress": "In progress",
+      "blocked": "Blocked",
+      "deferred": "Deferred",
+      "closed": "Closed",
+      "pinned": "Pinned",
+      "hooked": "Hooked"
+    },
+    "error": {
+      "loadList": "Failed to load Beads issues.",
+      "notFound": "Issue not found.",
+      "loadDetail": "Failed to load issue."
+    },
+    "source": {
+      "label": "Beads"
+    }
   }
 }
