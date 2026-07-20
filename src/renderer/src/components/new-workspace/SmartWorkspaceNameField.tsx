@@ -333,13 +333,20 @@ export default function SmartWorkspaceNameField({
   )
   const availableTaskProviders = useMemo(
     () =>
-      filterAvailableTaskProviders(['github', 'gitlab', 'linear'], {
+      filterAvailableTaskProviders(['github', 'gitlab', 'linear', 'beads'], {
         gitlabInstalled: gitlabSourceAvailable,
         linearConnected: linearStatus.connected === true,
-        // Why: bd-installed detection lands in a later slice (orca-0cc.4).
-        beadsInstalled: false
+        // Why: this field has no beads composer mode (see orca-0cc.13) — the
+        // global gate is wired anyway so `availableTaskProviders` stays
+        // accurate for any future consumer of this list.
+        beadsInstalled: preflightStatusCurrent && preflightStatus?.beads?.installed === true
       }),
-    [gitlabSourceAvailable, linearStatus.connected]
+    [
+      gitlabSourceAvailable,
+      linearStatus.connected,
+      preflightStatusCurrent,
+      preflightStatus?.beads?.installed
+    ]
   )
   const linearAvailable = availableTaskProviders.includes('linear')
   const availableModes = getSmartWorkspaceNameModes().filter((item) => {
