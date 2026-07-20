@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
+  getBeadsIssueWorkspaceSeed,
   getLinearIssueWorkspaceName,
   getLinkedWorkItemSuggestedName,
   getLinkedWorkItemWorkspaceName,
@@ -79,6 +80,33 @@ describe('getLinkedWorkItemWorkspaceName', () => {
       displayName: 'PROJ-7 Fix flaky import',
       seedName: 'proj-7-fix-flaky-import'
     })
+  })
+
+  it('leads with the lowercase beads id and does not upper-case it', () => {
+    expect(
+      getLinkedWorkItemWorkspaceName({
+        type: 'issue',
+        provider: 'beads',
+        number: 0,
+        title: 'Add beads provider',
+        beadsIdentifier: 'orca-42'
+      })
+    ).toEqual({
+      displayName: 'orca-42 Add beads provider',
+      seedName: 'orca-42-add-beads-provider'
+    })
+  })
+})
+
+describe('getBeadsIssueWorkspaceSeed', () => {
+  it('derives the seed from the bead id and title', () => {
+    expect(getBeadsIssueWorkspaceSeed({ id: 'orca-42', title: 'Add beads provider' })).toBe(
+      'orca-42-add-beads-provider'
+    )
+  })
+
+  it('falls back to the id slug when the title is empty', () => {
+    expect(getBeadsIssueWorkspaceSeed({ id: 'orca-7', title: '' })).toBe('orca-7')
   })
 })
 

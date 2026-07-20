@@ -2,7 +2,7 @@
    reseeds its edit form + reason panels from the freshly-fetched bd issue when
    the selected issue identity changes, mirroring GitLabItemDialog. */
 import React, { useEffect, useState } from 'react'
-import { ArrowLeft, Check, LoaderCircle, Pencil, RotateCcw, X } from 'lucide-react'
+import { ArrowLeft, Check, LoaderCircle, Pencil, Play, RotateCcw, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/sheet'
@@ -36,6 +36,8 @@ export type BeadsItemDialogProps = {
   onAddComment: (text: string) => void
   onCloseIssue: (reason?: string) => void
   onReopenIssue: (reason?: string) => void
+  // Start an agent workspace linked to this beads issue (bead orca-0cc.16).
+  onStartWork?: (issue: BeadsIssueInfo) => void
   // Back-navigation for chip-driven dependency navigation (bead orca-0cc.14).
   canGoBack?: boolean
   onBack?: () => void
@@ -295,7 +297,15 @@ export function BeadsItemDialog(props: BeadsItemDialogProps): React.JSX.Element 
                   </div>
                 </div>
               ) : (
-                <div className="flex justify-end">
+                <div className="flex items-center justify-between">
+                  {props.onStartWork ? (
+                    <Button type="button" size="sm" onClick={() => props.onStartWork?.(issue)}>
+                      <Play className="size-4" />
+                      {translate('beads.dialog.startWork', 'Start work')}
+                    </Button>
+                  ) : (
+                    <span />
+                  )}
                   {closed ? (
                     <Button
                       type="button"
