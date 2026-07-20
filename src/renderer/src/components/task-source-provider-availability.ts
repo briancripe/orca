@@ -9,7 +9,9 @@ type ProviderToolStatus = {
   authenticated: boolean
 }
 
-type ProviderAvailabilityStatus = ProviderToolStatus | 'unsupported'
+// Why: 'repo-not-initialized' is beads-only — the repo's `.beads/` hasn't
+// been created, distinct from the tool being absent entirely.
+type ProviderAvailabilityStatus = ProviderToolStatus | 'unsupported' | 'repo-not-initialized'
 
 export type RuntimeProviderPreflightStatus = {
   checked: boolean
@@ -44,19 +46,23 @@ function getRepoBackedProviderToolStatus(
     return preflightStatus.gh
   }
   if (provider === 'beads') {
-    // Why: bd has no hosted auth (see PreflightStatus.beads doc) — installed
-    // and authenticated collapse together so getProviderReason always reports
-    // "unavailable-source-tool" for both "bd not on PATH" and "repo not
-    // initialized" (never "missing-provider-auth").
+    // Why: bd has no hosted auth (see PreflightStatus.beads doc), so
+    // "authenticated" never applies here — but "bd not on PATH" and "repo not
+    // initialized" are two distinct, separately-actionable problems, so they
+    // report different reasons via getProviderReason below.
     if (preflightStatus.beads?.installed !== true) {
       return { installed: false, authenticated: false }
     }
     if (!beadsDiagnosis?.checked) {
       return null
     }
-    const repoReady =
-      beadsDiagnosis.status?.bdAvailable === true && beadsDiagnosis.status.repoInitialized
-    return { installed: repoReady, authenticated: repoReady }
+    if (beadsDiagnosis.status?.bdAvailable !== true) {
+      return { installed: false, authenticated: false }
+    }
+    if (!beadsDiagnosis.status.repoInitialized) {
+      return 'repo-not-initialized'
+    }
+    return { installed: true, authenticated: true }
   }
   // Why: older remote servers can predate GitLab preflight entirely. That is a
   // host capability gap, not a user-fixable missing `glab` install.
@@ -70,6 +76,9 @@ function getProviderReason(
 ): TaskSourceHostAvailability['reason'] | null {
   if (status === 'unsupported') {
     return 'unsupported-provider'
+  }
+  if (status === 'repo-not-initialized') {
+    return 'beads-repo-not-initialized'
   }
   if (!status.installed) {
     return 'unavailable-source-tool'

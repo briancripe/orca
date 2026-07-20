@@ -196,7 +196,7 @@ describe('task source provider availability', () => {
     ).toEqual([])
   })
 
-  it('marks bd unavailable with an init reason when the repo is not yet initialized', () => {
+  it('marks bd unavailable with a distinct init-guidance reason when the repo is not yet initialized', () => {
     expect(
       getRepoBackedProviderAvailability({
         provider: 'beads',
@@ -205,6 +205,20 @@ describe('task source provider availability', () => {
         preflightStatus: readyPreflight,
         beadsRepoDiagnosisByRepoId: new Map([
           ['repo-local', { checked: true, status: { bdAvailable: true, repoInitialized: false } }]
+        ])
+      })
+    ).toEqual([{ hostId: 'local', reason: 'beads-repo-not-initialized' }])
+  })
+
+  it('marks bd unavailable with the generic tool reason when diagnose reports bd missing', () => {
+    expect(
+      getRepoBackedProviderAvailability({
+        provider: 'beads',
+        contexts: [source('local')],
+        preflightReady: true,
+        preflightStatus: readyPreflight,
+        beadsRepoDiagnosisByRepoId: new Map([
+          ['repo-local', { checked: true, status: { bdAvailable: false, repoInitialized: false } }]
         ])
       })
     ).toEqual([{ hostId: 'local', reason: 'unavailable-source-tool' }])

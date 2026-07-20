@@ -205,6 +205,11 @@ function getAutomationSourceAvailability(
         `Connect the saved ${providerLabel} source account before running manually.`
       )
     case 'unavailable-source-tool':
+    // Why: automations don't support beads as a source yet (see
+    // orca-0cc.12/.13) — bucket alongside the generic tool-unavailable
+    // reason so this switch stays exhaustive without a beads-specific
+    // automations message.
+    case 'beads-repo-not-initialized':
       return unavailable(
         'source-tool-unavailable',
         `Install or configure the ${providerLabel} source tool before running manually.`
