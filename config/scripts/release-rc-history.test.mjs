@@ -57,7 +57,11 @@ describe('release RC history', () => {
     withGitRepo((repo) => {
       commit(repo, 'initial')
       commit(repo, 'release: v1.4.36-rc.5')
-      git(repo, ['tag', 'v1.4.36-rc.5'])
+      // Why -m: a plain `git tag <name>` becomes an annotated (message-required)
+      // tag under a global `tag.gpgSign=true`, which otherwise hangs on $EDITOR
+      // non-interactively — an explicit message keeps this hermetic regardless
+      // of the caller's signing config.
+      git(repo, ['tag', '-m', 'test tag', 'v1.4.36-rc.5'])
       commit(repo, 'release: v1.4.36-rc.6')
 
       expect(highestRcForBase('1.4.36', { cwd: repo })).toBe(6)
