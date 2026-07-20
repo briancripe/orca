@@ -436,6 +436,27 @@ import {
 } from '../gitlab/client'
 import { getGlabKnownHosts } from '../gitlab/gl-utils'
 import { getWorkItemDetails as getGitLabWorkItemDetails } from '../gitlab/work-item-details'
+import { diagnoseBeads as diagnoseBeadsClient } from '../beads/client'
+import {
+  getIssue as getBeadsIssue,
+  listIssues as listBeadsIssues,
+  listLabels as listBeadsLabels,
+  type BeadsIssueFilters
+} from '../beads/issue-queries'
+import {
+  addIssueComment as addBeadsIssueComment,
+  closeIssue as closeBeadsIssue,
+  createIssue as createBeadsIssue,
+  reopenIssue as reopenBeadsIssue,
+  updateIssue as updateBeadsIssue,
+  type BeadsIssueCreateInput,
+  type BeadsIssueUpdate
+} from '../beads/issue-crud'
+import {
+  addDependency as addBeadsDependency,
+  removeDependency as removeBeadsDependency
+} from '../beads/dependencies'
+import type { BeadsWorkItem } from '../../shared/beads-types'
 import {
   normalizeGitLabIssueListArgs,
   normalizeGitLabMRListState,
@@ -13549,6 +13570,112 @@ export class OrcaRuntimeService {
       )
     }
     return result
+  }
+
+  // ── Beads (`bd`) runtime methods — the SSH/remote seam: bd runs on
+  // whichever host owns the checkout. Thin wrappers over the bd-client,
+  // parallel to the GitLab methods above; a single BdCallOptions object
+  // (not the gitlab spread-arg style) carries the WSL distro so bd runs in
+  // the right distro on the runtime host.
+  private getBeadsCallOptions(repo: Repo): { wslDistro?: string } {
+    return this.getLocalGitExecutionOptionArgs(repo)[0] ?? {}
+  }
+
+  async diagnoseRepoBeads(
+    repoSelector: string
+  ): Promise<Awaited<ReturnType<typeof diagnoseBeadsClient>>> {
+    const repo = await this.resolveRepoSelector(repoSelector)
+    return diagnoseBeadsClient(repo.path, this.getBeadsCallOptions(repo))
+  }
+
+  async listBeadsRepoIssues(
+    repoSelector: string,
+    filters?: BeadsIssueFilters
+  ): Promise<Awaited<ReturnType<typeof listBeadsIssues>>> {
+    const repo = await this.resolveRepoSelector(repoSelector)
+    const result = await listBeadsIssues(repo.path, filters ?? {}, this.getBeadsCallOptions(repo))
+    // Why: bd's per-issue JSON has no repo concept (single local db), so the
+    // mapper leaves repoId blank — stamp the resolved repo id here, exactly
+    // like the desktop IPC handler and listGitLabRepoIssues do.
+    const items: BeadsWorkItem[] = result.items.map((item) => ({ ...item, repoId: repo.id }))
+    return { items, ...(result.error ? { error: result.error } : {}) }
+  }
+
+  async getBeadsRepoIssue(
+    repoSelector: string,
+    id: string
+  ): Promise<Awaited<ReturnType<typeof getBeadsIssue>>> {
+    const repo = await this.resolveRepoSelector(repoSelector)
+    return getBeadsIssue(repo.path, id, this.getBeadsCallOptions(repo))
+  }
+
+  async listBeadsRepoLabels(
+    repoSelector: string
+  ): Promise<Awaited<ReturnType<typeof listBeadsLabels>>> {
+    const repo = await this.resolveRepoSelector(repoSelector)
+    return listBeadsLabels(repo.path, this.getBeadsCallOptions(repo))
+  }
+
+  async createBeadsRepoIssue(
+    repoSelector: string,
+    input: BeadsIssueCreateInput
+  ): Promise<Awaited<ReturnType<typeof createBeadsIssue>>> {
+    const repo = await this.resolveRepoSelector(repoSelector)
+    return createBeadsIssue(repo.path, input, this.getBeadsCallOptions(repo))
+  }
+
+  async updateBeadsRepoIssue(
+    repoSelector: string,
+    id: string,
+    updates: BeadsIssueUpdate
+  ): Promise<Awaited<ReturnType<typeof updateBeadsIssue>>> {
+    const repo = await this.resolveRepoSelector(repoSelector)
+    return updateBeadsIssue(repo.path, id, updates, this.getBeadsCallOptions(repo))
+  }
+
+  async closeBeadsRepoIssue(
+    repoSelector: string,
+    id: string,
+    reason?: string
+  ): Promise<Awaited<ReturnType<typeof closeBeadsIssue>>> {
+    const repo = await this.resolveRepoSelector(repoSelector)
+    return closeBeadsIssue(repo.path, id, reason, this.getBeadsCallOptions(repo))
+  }
+
+  async reopenBeadsRepoIssue(
+    repoSelector: string,
+    id: string,
+    reason?: string
+  ): Promise<Awaited<ReturnType<typeof reopenBeadsIssue>>> {
+    const repo = await this.resolveRepoSelector(repoSelector)
+    return reopenBeadsIssue(repo.path, id, reason, this.getBeadsCallOptions(repo))
+  }
+
+  async addBeadsRepoIssueComment(
+    repoSelector: string,
+    id: string,
+    text: string
+  ): Promise<Awaited<ReturnType<typeof addBeadsIssueComment>>> {
+    const repo = await this.resolveRepoSelector(repoSelector)
+    return addBeadsIssueComment(repo.path, id, text, this.getBeadsCallOptions(repo))
+  }
+
+  async addBeadsRepoDependency(
+    repoSelector: string,
+    issueId: string,
+    dependsOnId: string
+  ): Promise<Awaited<ReturnType<typeof addBeadsDependency>>> {
+    const repo = await this.resolveRepoSelector(repoSelector)
+    return addBeadsDependency(repo.path, issueId, dependsOnId, this.getBeadsCallOptions(repo))
+  }
+
+  async removeBeadsRepoDependency(
+    repoSelector: string,
+    issueId: string,
+    dependsOnId: string
+  ): Promise<Awaited<ReturnType<typeof removeBeadsDependency>>> {
+    const repo = await this.resolveRepoSelector(repoSelector)
+    return removeBeadsDependency(repo.path, issueId, dependsOnId, this.getBeadsCallOptions(repo))
   }
 
   async getRepoIssue(
