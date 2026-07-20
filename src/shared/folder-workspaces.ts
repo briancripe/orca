@@ -20,20 +20,31 @@ export function normalizeFolderWorkspaceLinkedTask(
     raw.provider !== 'github' &&
     raw.provider !== 'gitlab' &&
     raw.provider !== 'linear' &&
-    raw.provider !== 'jira'
+    raw.provider !== 'jira' &&
+    raw.provider !== 'beads'
   ) {
     return null
   }
   if (raw.type !== 'issue' && raw.type !== 'pr' && raw.type !== 'mr') {
     return null
   }
+  // Why: beads issues have no hosted page, so their url is the empty string and
+  // the real ID lives in beadsIdentifier — the url/identifier checks below relax
+  // for beads accordingly so a beads linked task survives a persistence round-trip.
+  const isBeads = raw.provider === 'beads'
   if (
     typeof raw.number !== 'number' ||
     !Number.isFinite(raw.number) ||
     typeof raw.title !== 'string' ||
     raw.title.trim().length === 0 ||
     typeof raw.url !== 'string' ||
-    raw.url.trim().length === 0
+    (!isBeads && raw.url.trim().length === 0)
+  ) {
+    return null
+  }
+  if (
+    isBeads &&
+    (typeof raw.beadsIdentifier !== 'string' || raw.beadsIdentifier.trim().length === 0)
   ) {
     return null
   }
@@ -48,6 +59,9 @@ export function normalizeFolderWorkspaceLinkedTask(
       : {}),
     ...(typeof raw.jiraIdentifier === 'string' && raw.jiraIdentifier.trim().length > 0
       ? { jiraIdentifier: raw.jiraIdentifier.trim() }
+      : {}),
+    ...(typeof raw.beadsIdentifier === 'string' && raw.beadsIdentifier.trim().length > 0
+      ? { beadsIdentifier: raw.beadsIdentifier.trim() }
       : {}),
     ...(typeof raw.repoId === 'string' && raw.repoId.trim().length > 0
       ? { repoId: raw.repoId.trim() }

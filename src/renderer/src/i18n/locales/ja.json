@@ -6652,7 +6652,9 @@
           "dd67a1b6e1": "タスクのソース ピッカーとサイドバーのショートカットに GitLab を表示します。",
           "7c5d7fdc20": "GitLab",
           "1db47236cd": "タスクのソース ピッカーとサイドバーのショートカットに GitHub を表示します。",
-          "e14063e727": "GitHub"
+          "e14063e727": "GitHub",
+          "beads_label": "Beads",
+          "beads_description": "Show Beads in the Tasks source picker and sidebar shortcuts."
         },
         "TerminalAppearanceSection": {
           "a14a427ae4": "ペイン分割線の太さ。",
@@ -7829,7 +7831,9 @@
             "41ccade05c": "gh",
             "b79c21bd42": "GitHub",
             "7166b9090c": "gh CLI を介した GitHub 認証。",
-            "f16e41cc72": "GitHub 連携"
+            "f16e41cc72": "GitHub 連携",
+            "beads_title": "Beads Integration",
+            "beads_description": "Beads (bd) detection via the local CLI."
           }
         },
         "jira": {
@@ -8748,7 +8752,9 @@
           "localMac": "Local Mac",
           "localCredentials": "Credentials and account checks for this provider are owned by this desktop client. Use Settings > Remote Orca Servers > Advanced to edit server-owned credentials.",
           "remoteServerRateLimit": "{{value0}} API budget is fetched from the CLI on this remote server. Use Settings > Remote Orca Servers > Advanced to view another default runtime budget.",
-          "localRateLimit": "{{value0}} API budget is fetched from the CLI on this desktop client. Use Settings > Remote Orca Servers > Advanced to view server-owned budgets."
+          "localRateLimit": "{{value0}} API budget is fetched from the CLI on this desktop client. Use Settings > Remote Orca Servers > Advanced to view server-owned budgets.",
+          "beadsRemoteHost": "bd runs on this remote server. Use Settings > Remote Orca Servers > Advanced to edit another default runtime scope.",
+          "beadsLocalHost": "bd runs on this desktop client. Use Settings > Remote Orca Servers > Advanced to edit server-owned hosts."
         },
         "settingOwnership": {
           "clientDefault": "Client default",
@@ -8994,6 +9000,23 @@
           "reviewFirst": "最初にレビュー",
           "singular": "グローバルの保存は、独自のレシピを持つ1つのリポジトリを変更しません。",
           "tooltipTitle": "リポジトリのオーバーライド"
+        },
+        "beads": {
+          "integration": {
+            "card": {
+              "description_prefix": "Browse and start work from",
+              "bd": "bd",
+              "description_suffix": "issues via the local CLI.",
+              "connected": "Connected",
+              "unavailable": "Unavailable",
+              "not_installed": "Not installed",
+              "host_scope_prefix": "Host scope",
+              "unavailable_copy": "Beads status is not available in this runtime yet.",
+              "recheck": "Re-check",
+              "not_installed_copy": "Install Beads (bd) to browse and start work from its issues.",
+              "install": "Install Beads"
+            }
+          }
         },
         "linear": {
           "agent": {
@@ -13157,6 +13180,155 @@
           "githubPullRequestNumber": "PR #{{value0}}"
         }
       }
+    }
+  },
+  "beads": {
+    "section": {
+      "comments": "Comments",
+      "dependencies": "Dependencies",
+      "description": "Description",
+      "design": "Design",
+      "acceptanceCriteria": "Acceptance criteria",
+      "notes": "Notes",
+      "empty": "None"
+    },
+    "comments": {
+      "empty": "No comments yet.",
+      "composerAria": "Add a comment",
+      "placeholder": "Add a comment…",
+      "submit": "Comment"
+    },
+    "create": {
+      "title": "New Beads issue",
+      "titleAria": "Title",
+      "titlePlaceholder": "Title",
+      "descriptionAria": "Description",
+      "descriptionPlaceholder": "Description",
+      "typeAria": "Type",
+      "typePlaceholder": "Type",
+      "priorityAria": "Priority",
+      "assigneeAria": "Assignee",
+      "assigneePlaceholder": "Assignee",
+      "labelsAria": "Labels (comma separated)",
+      "labelsPlaceholder": "label-a, label-b",
+      "cancel": "Cancel",
+      "submit": "Create issue"
+    },
+    "dependencies": {
+      "empty": "No dependencies."
+    },
+    "filter": {
+      "ready": "Ready",
+      "type": "Type",
+      "typeAria": "Filter by type",
+      "label": "Label",
+      "labelAria": "Filter by label",
+      "assignee": "Assignee",
+      "assigneeAria": "Filter by assignee",
+      "groupByEpic": "Group by epic"
+    },
+    "action": {
+      "refresh": "Refresh Beads issues",
+      "newIssue": "New issue"
+    },
+    "dialog": {
+      "description": "Beads issue details",
+      "loadError": "Could not load this Beads issue.",
+      "save": "Save",
+      "cancel": "Cancel",
+      "edit": "Edit",
+      "close": "Close details",
+      "titleAria": "Issue title",
+      "typeAria": "Issue type",
+      "typePlaceholder": "Type",
+      "priorityAria": "Priority",
+      "assigneeAria": "Assignee",
+      "assigneePlaceholder": "Assignee",
+      "labelsAria": "Labels (comma separated)",
+      "labelsPlaceholder": "label-a, label-b",
+      "closeReasonAria": "Close reason (optional)",
+      "closeReason": "Reason (optional)",
+      "confirmClose": "Close issue",
+      "reopen": "Reopen",
+      "closeIssue": "Close issue",
+      "back": "Back",
+      "startWork": "Start work"
+    },
+    "list": {
+      "error": "Could not load Beads issues for this repository.",
+      "emptyFiltered": "No issues match the current filters.",
+      "empty": "No Beads issues yet. Create one to get started."
+    },
+    "guidance": {
+      "bdMissing": {
+        "title": "Beads (bd) is not installed",
+        "body": "Install the bd binary and make sure it is on PATH to browse and manage Beads issues here."
+      },
+      "uninitialized": {
+        "title": "This repository has no Beads store",
+        "body": "Run `bd init` in this repository to create its Beads store, then reload."
+      }
+    },
+    "surface": {
+      "noRepo": "Select a repository to browse its Beads issues."
+    },
+    "column": {
+      "id": "Pri / ID",
+      "title": "Title",
+      "status": "Status / Type",
+      "updated": "Updated"
+    },
+    "dep": {
+      "blocks": "Blocked by",
+      "parentChild": "Parent / child",
+      "related": "Related",
+      "relatesTo": "Relates to",
+      "discoveredFrom": "Discovered from",
+      "duplicates": "Duplicates",
+      "supersedes": "Supersedes",
+      "confirmRemove": "Remove",
+      "cancelRemove": "Cancel",
+      "removeAria": "Remove dependency {{value0}}",
+      "blockedBy": "Blocked by open issues",
+      "dismiss": "Dismiss",
+      "addAria": "Add a blocking dependency",
+      "addPlaceholder": "Block on… (search id or title)"
+    },
+    "status": {
+      "open": "Open",
+      "in_progress": "In progress",
+      "blocked": "Blocked",
+      "deferred": "Deferred",
+      "closed": "Closed",
+      "pinned": "Pinned",
+      "hooked": "Hooked"
+    },
+    "error": {
+      "loadList": "Failed to load Beads issues.",
+      "notFound": "Issue not found.",
+      "loadDetail": "Failed to load issue.",
+      "addDependency": "Could not add the dependency.",
+      "removeDependency": "Could not remove the dependency.",
+      "create": "Could not create the issue.",
+      "edit": "Could not save the issue.",
+      "comment": "Could not add the comment.",
+      "close": "Could not close the issue.",
+      "reopen": "Could not reopen the issue."
+    },
+    "source": {
+      "label": "Beads"
+    },
+    "epic": {
+      "toggleAria": "Toggle epic {{value0}}",
+      "noChildren": "No child issues.",
+      "ungrouped": "Ungrouped"
+    },
+    "success": {
+      "create": "Issue created.",
+      "edit": "Issue updated.",
+      "comment": "Comment added.",
+      "close": "Issue closed.",
+      "reopen": "Issue reopened."
     }
   }
 }

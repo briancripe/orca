@@ -30,5 +30,9 @@ export function shouldHideTaskPageListChrome({
       return hasJiraDetail
     case 'linear':
       return hasLinearIssueDetail || hasLinearProjectContext || hasLinearViewContext
+    case 'beads':
+      // Why: beads TaskPage browse/detail UI lands in a later slice
+      // (orca-0cc.13) — never hide the list chrome for it yet.
+      return false
   }
 }

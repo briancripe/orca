@@ -1,6 +1,12 @@
-export type TaskProvider = 'github' | 'gitlab' | 'linear' | 'jira'
+export type TaskProvider = 'github' | 'gitlab' | 'linear' | 'jira' | 'beads'
 
-export const TASK_PROVIDERS: readonly TaskProvider[] = ['github', 'gitlab', 'linear', 'jira']
+export const TASK_PROVIDERS: readonly TaskProvider[] = [
+  'github',
+  'gitlab',
+  'linear',
+  'jira',
+  'beads'
+]
 
 const TASK_PROVIDER_SET = new Set<TaskProvider>(TASK_PROVIDERS)
 
@@ -55,6 +61,7 @@ export function normalizeVisibleTaskProviders(value: unknown): TaskProvider[] {
 export type TaskProviderAvailability = {
   gitlabInstalled: boolean
   linearConnected: boolean
+  beadsInstalled: boolean
 }
 
 export function filterAvailableTaskProviders(
@@ -104,6 +111,12 @@ function isTaskProviderAvailable(
   // when disconnected would remove the entry point for first-time setup.
   if (provider === 'jira') {
     return true
+  }
+  // Why: gated on the global "bd binary installed" preflight only — the
+  // per-repo `.beads/` check is repo-scoped availability, wired in a later
+  // slice (see orca-0cc.12).
+  if (provider === 'beads') {
+    return availability.beadsInstalled
   }
   return availability.linearConnected
 }

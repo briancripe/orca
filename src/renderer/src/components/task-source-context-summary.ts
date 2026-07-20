@@ -4,7 +4,8 @@ import type { ExecutionHostScope } from '../../../shared/execution-host'
 import type { ExecutionHostHealth } from '../../../shared/execution-host-registry'
 import type { SshConnectionStatus } from '../../../shared/ssh-types'
 import type { TaskProvider } from '../../../shared/types'
-import type { TaskProviderIdentity, TaskSourceContext } from '../../../shared/task-source-context'
+import type { TaskSourceContext } from '../../../shared/task-source-context'
+import { getProviderIdentityLabel } from './task-source-provider-identity-label'
 
 export type TaskSourceContextSummary = {
   label: string
@@ -27,6 +28,10 @@ export type TaskSourceHostAvailability = {
     | 'missing-provider-auth'
     | 'unavailable-source-tool'
     | 'unsupported-provider'
+    // Why: distinct from `unavailable-source-tool` — bd is installed but this
+    // repo's `.beads/` hasn't been created yet, which needs "run bd init"
+    // guidance rather than "go install bd" guidance.
+    | 'beads-repo-not-initialized'
 }
 
 type HostLabelLookup = ReadonlyMap<string, string> | undefined
@@ -49,6 +54,7 @@ export function getTaskSourceContextSummary(args: {
   switch (args.provider) {
     case 'github':
     case 'gitlab':
+    case 'beads':
       return getRepoBackedTaskSourceSummary(args)
     case 'linear':
       return getAccountBackedTaskSourceSummary(args.providerLabel, {
@@ -181,26 +187,6 @@ function getAccountBackedTaskSourceSummary(
   }
 }
 
-function getProviderIdentityLabel(
-  identity: TaskProviderIdentity | null | undefined
-): string | null {
-  if (!identity) {
-    return null
-  }
-  switch (identity.provider) {
-    case 'github':
-      return `${identity.owner}/${identity.repo}`
-    case 'gitlab':
-      return identity.namespace && identity.project
-        ? `${identity.namespace}/${identity.project}`
-        : (identity.projectId ?? null)
-    case 'linear':
-      return identity.workspaceName ?? identity.workspaceId ?? null
-    case 'jira':
-      return identity.siteUrl ?? identity.siteId ?? null
-  }
-}
-
 function uniqueLabels(labels: readonly (string | null | undefined)[]): string[] {
   const seen = new Set<string>()
   const result: string[] = []
@@ -254,6 +240,8 @@ function getAvailabilityStatusLabel(availability: TaskSourceHostAvailability): s
       return 'source tool unavailable'
     case 'unsupported-provider':
       return 'provider unsupported on this host'
+    case 'beads-repo-not-initialized':
+      return 'run bd init in this repo'
   }
   if (availability.status) {
     return availability.status === 'connected' ? null : getSshStatusLabel(availability.status)

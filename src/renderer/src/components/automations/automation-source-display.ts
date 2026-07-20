@@ -58,6 +58,10 @@ function getSourceIdentityLabel(sourceContext: TaskSourceContext): string | null
         return identity.workspaceName ?? identity.workspaceId ?? null
       case 'jira':
         return identity.siteUrl ?? identity.siteId ?? null
+      case 'beads':
+        // Why: beads carries no extra identity beyond the repo context
+        // already summarized elsewhere (see BeadsTaskProviderIdentity).
+        return null
     }
   }
   return sourceContext.accountLabel ?? sourceContext.repoId ?? null
