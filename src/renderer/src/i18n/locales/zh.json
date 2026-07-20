@@ -13307,7 +13307,12 @@
       "notFound": "Issue not found.",
       "loadDetail": "Failed to load issue.",
       "addDependency": "Could not add the dependency.",
-      "removeDependency": "Could not remove the dependency."
+      "removeDependency": "Could not remove the dependency.",
+      "create": "Could not create the issue.",
+      "edit": "Could not save the issue.",
+      "comment": "Could not add the comment.",
+      "close": "Could not close the issue.",
+      "reopen": "Could not reopen the issue."
     },
     "source": {
       "label": "Beads"
@@ -13316,6 +13321,13 @@
       "toggleAria": "Toggle epic {{value0}}",
       "noChildren": "No child issues.",
       "ungrouped": "Ungrouped"
+    },
+    "success": {
+      "create": "Issue created.",
+      "edit": "Issue updated.",
+      "comment": "Comment added.",
+      "close": "Issue closed.",
+      "reopen": "Issue reopened."
     }
   }
 }

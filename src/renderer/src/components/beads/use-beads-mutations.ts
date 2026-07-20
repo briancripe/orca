@@ -3,14 +3,25 @@
    flips a busy flag and — on settle — signals the caller to re-fetch the list
    (and optionally the open detail); the slice has already invalidated those
    caches, so the re-fetch returns fresh data (the "invalidate + refresh"
-   contract). Dependency add/remove additionally surface bd's classified error
-   (e.g. cycle detection) inline rather than throwing. */
+   contract).
+
+   bd write channels resolve `{ok:false, error}` rather than throwing (see
+   src/main/ipc/beads.ts) — runMutation checks `result.ok` before treating a
+   settle as success, mirroring GitLabItemDialog's result-checking + toast
+   pattern, so a failed mutation surfaces an error instead of silently
+   behaving like a success (e.g. closing the create dialog with nothing
+   created). Dependency add/remove keep their own inline dependencyError
+   surfacing (bd's cycle-detection message shown in the dialog, not a toast)
+   rather than this toast path. */
 import { useCallback, useState } from 'react'
+import { toast } from 'sonner'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
 import type { BeadsCreateInput, BeadsRepoContext } from '@/store/slices/beads-cache'
 import type { BeadsIssueUpdate } from '@/store/slices/beads'
 import type { ClassifiedError } from '../../../../shared/types'
+
+type BeadsMutationEnvelope = { ok: true } | { ok: false; error: ClassifiedError }
 
 export type BeadsMutationsModel = {
   savingEdit: boolean
@@ -57,14 +68,29 @@ export function useBeadsMutations(args: UseBeadsMutationsArgs): BeadsMutationsMo
   const [dependencyError, setDependencyError] = useState<ClassifiedError | null>(null)
 
   const runMutation = useCallback(
-    async (
+    async <T extends BeadsMutationEnvelope>(
       setBusy: (busy: boolean) => void,
-      run: () => Promise<unknown>,
-      options: { reloadDetail?: boolean } = {}
+      run: () => Promise<T>,
+      options: {
+        reloadDetail?: boolean
+        successMessage?: string
+        fallbackErrorMessage: string
+        onSuccess?: () => void
+      }
     ): Promise<void> => {
       setBusy(true)
       try {
-        await run()
+        const result = await run()
+        if (result.ok) {
+          if (options.successMessage) {
+            toast.success(options.successMessage)
+          }
+          options.onSuccess?.()
+        } else {
+          toast.error(result.error.message || options.fallbackErrorMessage)
+        }
+      } catch {
+        toast.error(options.fallbackErrorMessage)
       } finally {
         setBusy(false)
         onRefresh()
@@ -108,7 +134,11 @@ export function useBeadsMutations(args: UseBeadsMutationsArgs): BeadsMutationsMo
       if (!ctx) {
         return
       }
-      void runMutation(setCreating, () => createBeadsIssue(ctx, input)).then(onCreated)
+      void runMutation(setCreating, () => createBeadsIssue(ctx, input), {
+        successMessage: translate('beads.success.create', 'Issue created.'),
+        fallbackErrorMessage: translate('beads.error.create', 'Could not create the issue.'),
+        onSuccess: onCreated
+      })
     },
     [ctx, createBeadsIssue, runMutation, onCreated]
   )
@@ -119,7 +149,9 @@ export function useBeadsMutations(args: UseBeadsMutationsArgs): BeadsMutationsMo
         return
       }
       void runMutation(setSavingEdit, () => updateBeadsIssue(ctx, selectedIssueId, update), {
-        reloadDetail: true
+        reloadDetail: true,
+        successMessage: translate('beads.success.edit', 'Issue updated.'),
+        fallbackErrorMessage: translate('beads.error.edit', 'Could not save the issue.')
       })
     },
     [ctx, selectedIssueId, updateBeadsIssue, runMutation]
@@ -131,7 +163,9 @@ export function useBeadsMutations(args: UseBeadsMutationsArgs): BeadsMutationsMo
         return
       }
       void runMutation(setCommenting, () => addBeadsComment(ctx, selectedIssueId, text), {
-        reloadDetail: true
+        reloadDetail: true,
+        successMessage: translate('beads.success.comment', 'Comment added.'),
+        fallbackErrorMessage: translate('beads.error.comment', 'Could not add the comment.')
       })
     },
     [ctx, selectedIssueId, addBeadsComment, runMutation]
@@ -143,7 +177,9 @@ export function useBeadsMutations(args: UseBeadsMutationsArgs): BeadsMutationsMo
         return
       }
       void runMutation(setChangingStatus, () => closeBeadsIssue(ctx, selectedIssueId, reason), {
-        reloadDetail: true
+        reloadDetail: true,
+        successMessage: translate('beads.success.close', 'Issue closed.'),
+        fallbackErrorMessage: translate('beads.error.close', 'Could not close the issue.')
       })
     },
     [ctx, selectedIssueId, closeBeadsIssue, runMutation]
@@ -155,7 +191,9 @@ export function useBeadsMutations(args: UseBeadsMutationsArgs): BeadsMutationsMo
         return
       }
       void runMutation(setChangingStatus, () => reopenBeadsIssue(ctx, selectedIssueId, reason), {
-        reloadDetail: true
+        reloadDetail: true,
+        successMessage: translate('beads.success.reopen', 'Issue reopened.'),
+        fallbackErrorMessage: translate('beads.error.reopen', 'Could not reopen the issue.')
       })
     },
     [ctx, selectedIssueId, reopenBeadsIssue, runMutation]

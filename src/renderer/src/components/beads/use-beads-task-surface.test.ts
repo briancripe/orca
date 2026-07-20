@@ -3,6 +3,8 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }))
+
 type Row = { id: string; issueType: string; [key: string]: unknown }
 
 const actions = {
@@ -26,6 +28,7 @@ vi.mock('@/store', () => ({
   useAppStore: (selector: (state: typeof actions) => unknown) => selector(actions)
 }))
 
+import { toast } from 'sonner'
 import { useBeadsTaskSurface } from './use-beads-task-surface'
 
 const ctx = { repoPath: '/repo', repoId: 'repo-1' }
@@ -34,6 +37,8 @@ beforeEach(() => {
   for (const fn of Object.values(actions)) {
     fn.mockClear()
   }
+  vi.mocked(toast.error).mockClear()
+  vi.mocked(toast.success).mockClear()
 })
 afterEach(() => vi.clearAllMocks())
 
@@ -96,6 +101,69 @@ describe('useBeadsTaskSurface mutation flows', () => {
       expect(actions.loadBeadsWorkItems.mock.calls.length).toBeGreaterThanOrEqual(2)
     )
   })
+})
+
+// Why: bd write channels resolve `{ok:false, error}` rather than throwing —
+// a failed mutation must surface an error and must NOT run the success
+// side-effect (e.g. createIssue closing the dialog with nothing created).
+describe('useBeadsTaskSurface failed mutation envelopes', () => {
+  it('does not close the create dialog and surfaces an error on a failed create', async () => {
+    actions.createBeadsIssue.mockResolvedValueOnce({
+      ok: false,
+      error: { type: 'validation_error', message: 'title is required' }
+    } as never)
+    const { result } = renderHook(() => useBeadsTaskSurface(ctx))
+    await waitFor(() => expect(actions.loadBeadsWorkItems).toHaveBeenCalledTimes(1))
+
+    act(() => result.current.setCreateOpen(true))
+    expect(result.current.createOpen).toBe(true)
+
+    await act(async () => {
+      result.current.createIssue({ title: 'x' })
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    // The dialog stays open — a failed create must not look like a success.
+    expect(result.current.createOpen).toBe(true)
+    expect(vi.mocked(toast.error)).toHaveBeenCalledWith('title is required')
+    expect(vi.mocked(toast.success)).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    [
+      'edit',
+      (m: ReturnType<typeof useBeadsTaskSurface>) => m.saveEdit({ title: 'y' }),
+      'updateBeadsIssue'
+    ],
+    ['close', (m: ReturnType<typeof useBeadsTaskSurface>) => m.closeIssue(), 'closeBeadsIssue'],
+    ['reopen', (m: ReturnType<typeof useBeadsTaskSurface>) => m.reopenIssue(), 'reopenBeadsIssue'],
+    [
+      'comment',
+      (m: ReturnType<typeof useBeadsTaskSurface>) => m.addComment('hi'),
+      'addBeadsComment'
+    ]
+  ])(
+    '%s surfaces an error toast instead of a success toast on failure',
+    async (_name, run, actionName) => {
+      ;(actions as Record<string, ReturnType<typeof vi.fn>>)[actionName].mockResolvedValueOnce({
+        ok: false,
+        error: { type: 'unknown', message: 'bd write failed' }
+      })
+      const { result } = renderHook(() => useBeadsTaskSurface(ctx))
+      await waitFor(() => expect(actions.loadBeadsWorkItems).toHaveBeenCalledTimes(1))
+      selectIssue(result)
+
+      await act(async () => {
+        run(result.current)
+        await Promise.resolve()
+        await Promise.resolve()
+      })
+
+      expect(vi.mocked(toast.error)).toHaveBeenCalledWith('bd write failed')
+      expect(vi.mocked(toast.success)).not.toHaveBeenCalled()
+    }
+  )
 })
 
 function selectIssue(result: { current: ReturnType<typeof useBeadsTaskSurface> }): void {
