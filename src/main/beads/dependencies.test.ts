@@ -160,5 +160,20 @@ describe('beads dependencies', () => {
       expect(bdExecFileAsyncMock).toHaveBeenCalledTimes(1)
       expect(result.progress.total).toBe(3)
     })
+
+    it('lists children with --all so closed children are counted', async () => {
+      bdExecFileAsyncMock.mockResolvedValueOnce({ stdout: bdListJson, stderr: '' })
+      await getEpicProgress('/repo', 'bd-fixture-sandbox-zk3')
+      expect(call(0).args).toEqual([
+        'list',
+        '--json',
+        '--no-pager',
+        '--parent',
+        'bd-fixture-sandbox-zk3',
+        '--limit',
+        '50',
+        '--all'
+      ])
+    })
   })
 })

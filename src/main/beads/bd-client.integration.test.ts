@@ -233,24 +233,26 @@ describe.skipIf(!bdAvailable)('bd client against a real bd binary', () => {
       title: 'Ship the ranking tweak',
       parent: parent.issue.id
     })
-    expect(inProgress.ok && pending.ok).toBe(true)
-    if (!inProgress.ok) {
+    const done = await createIssue(repoPath, {
+      title: 'Rewrite the query planner',
+      parent: parent.issue.id
+    })
+    expect(inProgress.ok && pending.ok && done.ok).toBe(true)
+    if (!inProgress.ok || !done.ok) {
       return
     }
     const updated = await updateIssue(repoPath, inProgress.issue.id, { status: 'in_progress' })
     expect(updated.ok).toBe(true)
+    const closed = await closeIssue(repoPath, done.issue.id, 'Landed in the last release')
+    expect(closed.ok).toBe(true)
 
-    // Why not a closed child: bd's `list` (what listChildren drives) omits
-    // closed issues unless `--all` is passed, so getEpicProgress's own
-    // closedCount is only ever reachable via the open/in-progress/blocked
-    // children still surfaced by that default listing.
     const progress = await getEpicProgress(repoPath, parent.issue.id)
     expect(progress.error).toBeUndefined()
     expect(progress.progress).toMatchObject({
-      total: 2,
+      total: 3,
       inProgressCount: 1,
       openCount: 1,
-      closedCount: 0
+      closedCount: 1
     })
   })
 })
