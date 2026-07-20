@@ -28,6 +28,10 @@ export type TaskSourceHostAvailability = {
     | 'missing-provider-auth'
     | 'unavailable-source-tool'
     | 'unsupported-provider'
+    // Why: distinct from `unavailable-source-tool` — bd is installed but this
+    // repo's `.beads/` hasn't been created yet, which needs "run bd init"
+    // guidance rather than "go install bd" guidance.
+    | 'beads-repo-not-initialized'
 }
 
 type HostLabelLookup = ReadonlyMap<string, string> | undefined
@@ -236,6 +240,8 @@ function getAvailabilityStatusLabel(availability: TaskSourceHostAvailability): s
       return 'source tool unavailable'
     case 'unsupported-provider':
       return 'provider unsupported on this host'
+    case 'beads-repo-not-initialized':
+      return 'run bd init in this repo'
   }
   if (availability.status) {
     return availability.status === 'connected' ? null : getSshStatusLabel(availability.status)

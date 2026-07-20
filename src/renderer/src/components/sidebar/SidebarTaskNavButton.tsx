@@ -101,8 +101,7 @@ export function SidebarTaskNavButton(): React.JSX.Element | null {
         {
           gitlabInstalled: preflightStatusCurrent && preflightStatus?.glab?.installed === true,
           linearConnected: linearStatus.connected === true,
-          // Why: bd-installed detection lands in a later slice (orca-0cc.4).
-          beadsInstalled: false
+          beadsInstalled: preflightStatusCurrent && preflightStatus?.beads?.installed === true
         },
         defaultTaskSource
       ),
@@ -111,7 +110,8 @@ export function SidebarTaskNavButton(): React.JSX.Element | null {
       linearStatus.connected,
       preferredVisibleTaskProviders,
       preflightStatusCurrent,
-      preflightStatus?.glab?.installed
+      preflightStatus?.glab?.installed,
+      preflightStatus?.beads?.installed
     ]
   )
   const resolvedDefaultTaskSource = React.useMemo(
