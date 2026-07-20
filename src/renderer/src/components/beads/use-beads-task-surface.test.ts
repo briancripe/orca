@@ -3,8 +3,13 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+type Row = { id: string; issueType: string; [key: string]: unknown }
+
 const actions = {
-  loadBeadsWorkItems: vi.fn(() => Promise.resolve({ items: [] })),
+  loadBeadsWorkItems: vi.fn(
+    (_ctx: unknown, _filters?: { parent?: string }): Promise<{ items: Row[] }> =>
+      Promise.resolve({ items: [] })
+  ),
   loadBeadsIssueDetails: vi.fn(() => Promise.resolve(null)),
   loadBeadsLabels: vi.fn(() => Promise.resolve({ items: [] })),
   beadsDiagnose: vi.fn(() => Promise.resolve({ bdAvailable: true, repoInitialized: true })),
@@ -157,5 +162,52 @@ describe('useBeadsTaskSurface dependency navigation', () => {
       await Promise.resolve()
     })
     await waitFor(() => expect(result.current.dependencyError?.message).toBe('cycle detected'))
+  })
+})
+
+const epicRow = {
+  id: 'e1',
+  title: 'Epic',
+  status: 'open' as const,
+  priority: 0 as const,
+  issueType: 'epic',
+  labels: [],
+  updatedAt: '2026-07-01T00:00:00Z',
+  repoId: 'repo-1'
+}
+
+describe('useBeadsTaskSurface epic grouping', () => {
+  it('fetches children once per epic (parent filter), not per row, and toggles back', async () => {
+    // The list fetch returns one epic + two non-epic rows; parent fetches return
+    // that epic's children.
+    actions.loadBeadsWorkItems.mockImplementation((_ctx: unknown, filters?: { parent?: string }) =>
+      filters?.parent
+        ? Promise.resolve({ items: [{ ...epicRow, id: 'child', issueType: 'task' }] })
+        : Promise.resolve({
+            items: [
+              epicRow,
+              { ...epicRow, id: 'x', issueType: 'task' },
+              { ...epicRow, id: 'y', issueType: 'bug' }
+            ]
+          })
+    )
+
+    const { result } = renderHook(() => useBeadsTaskSurface(ctx))
+    await waitFor(() => expect(result.current.items).toHaveLength(3))
+
+    act(() => result.current.setGroupByEpic(true))
+
+    // Exactly one parent-scoped fetch (one epic) — never one per row.
+    await waitFor(() => {
+      const parentCalls = actions.loadBeadsWorkItems.mock.calls.filter(
+        (call) => (call[1] as { parent?: string } | undefined)?.parent === 'e1'
+      )
+      expect(parentCalls).toHaveLength(1)
+    })
+    await waitFor(() => expect(result.current.epicGroups.epics).toHaveLength(1))
+    expect(result.current.epicGroups.orphans.map((orphan) => orphan.id)).toEqual(['x', 'y'])
+
+    act(() => result.current.setGroupByEpic(false))
+    expect(result.current.groupByEpic).toBe(false)
   })
 })

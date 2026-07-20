@@ -17,6 +17,8 @@ const baseProps = {
   assigneeSuggestions: [],
   typeSuggestions: [],
   loading: false,
+  groupByEpic: false,
+  onToggleGroupByEpic: vi.fn(),
   onCreate: vi.fn(),
   onRefresh: vi.fn()
 }

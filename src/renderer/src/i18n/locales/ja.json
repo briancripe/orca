@@ -13224,7 +13224,8 @@
       "label": "Label",
       "labelAria": "Filter by label",
       "assignee": "Assignee",
-      "assigneeAria": "Filter by assignee"
+      "assigneeAria": "Filter by assignee",
+      "groupByEpic": "Group by epic"
     },
     "action": {
       "refresh": "Refresh Beads issues",
@@ -13310,6 +13311,11 @@
     },
     "source": {
       "label": "Beads"
+    },
+    "epic": {
+      "toggleAria": "Toggle epic {{value0}}",
+      "noChildren": "No child issues.",
+      "ungrouped": "Ungrouped"
     }
   }
 }

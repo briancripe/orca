@@ -4,6 +4,7 @@ import type { BeadsRepoContext } from '@/store/slices/beads-cache'
 import { hasActiveBeadsFilters } from './beads-filter-model'
 import { BeadsFilterBar } from './BeadsFilterBar'
 import { BeadsWorkItemList } from './BeadsWorkItemList'
+import { BeadsGroupedList } from './BeadsGroupedList'
 import { BeadsItemDialog } from './BeadsItemDialog'
 import { BeadsCreateDialog } from './BeadsCreateDialog'
 import { BeadsDependencyEditor } from './BeadsDependencyEditor'
@@ -32,18 +33,30 @@ export function BeadsTaskSurface({ ctx }: { ctx: BeadsRepoContext | null }): Rea
         assigneeSuggestions={model.assigneeSuggestions}
         typeSuggestions={model.typeSuggestions}
         loading={model.listLoading}
+        groupByEpic={model.groupByEpic}
+        onToggleGroupByEpic={() => model.setGroupByEpic(!model.groupByEpic)}
         onCreate={() => model.setCreateOpen(true)}
         onRefresh={model.refresh}
       />
 
-      <BeadsWorkItemList
-        items={model.items}
-        loading={model.listLoading}
-        error={model.listError}
-        diagnostics={model.diagnostics}
-        hasFilters={hasActiveBeadsFilters(model.filterState)}
-        onOpenItem={model.openItem}
-      />
+      {model.groupByEpic ? (
+        <BeadsGroupedList
+          epics={model.epicGroups.epics}
+          childrenByEpicId={model.epicGroups.childrenByEpicId}
+          orphans={model.epicGroups.orphans}
+          loadingEpicIds={model.epicGroups.loadingEpicIds}
+          onOpenItem={model.openItem}
+        />
+      ) : (
+        <BeadsWorkItemList
+          items={model.items}
+          loading={model.listLoading}
+          error={model.listError}
+          diagnostics={model.diagnostics}
+          hasFilters={hasActiveBeadsFilters(model.filterState)}
+          onOpenItem={model.openItem}
+        />
+      )}
 
       <BeadsItemDialog
         open={model.selectedIssueId !== null}

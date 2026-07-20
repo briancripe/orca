@@ -1,5 +1,5 @@
 import React, { useId } from 'react'
-import { Plus, RefreshCw } from 'lucide-react'
+import { Layers, Plus, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
@@ -15,6 +15,8 @@ export type BeadsFilterBarProps = {
   assigneeSuggestions: readonly string[]
   typeSuggestions: readonly string[]
   loading: boolean
+  groupByEpic: boolean
+  onToggleGroupByEpic: () => void
   onCreate: () => void
   onRefresh: () => void
 }
@@ -61,6 +63,8 @@ export function BeadsFilterBar({
   assigneeSuggestions,
   typeSuggestions,
   loading,
+  groupByEpic,
+  onToggleGroupByEpic,
   onCreate,
   onRefresh
 }: BeadsFilterBarProps): React.JSX.Element {
@@ -128,6 +132,20 @@ export function BeadsFilterBar({
       />
 
       <div className="ml-auto flex items-center gap-2">
+        <button
+          type="button"
+          aria-pressed={groupByEpic}
+          onClick={onToggleGroupByEpic}
+          className={cn(
+            'flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium transition',
+            groupByEpic
+              ? 'border-foreground/40 bg-muted/70 text-foreground'
+              : 'border-border/40 bg-transparent text-muted-foreground hover:bg-muted/40'
+          )}
+        >
+          <Layers className="size-3.5" />
+          {translate('beads.filter.groupByEpic', 'Group by epic')}
+        </button>
         <Button
           type="button"
           variant="outline"

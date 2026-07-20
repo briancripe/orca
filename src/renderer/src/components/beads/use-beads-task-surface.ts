@@ -23,8 +23,12 @@ import {
   type BeadsFilterState
 } from './beads-filter-model'
 import { useBeadsMutations, type BeadsMutationsModel } from './use-beads-mutations'
+import { useBeadsEpicGroups, type BeadsEpicGroupsModel } from './use-beads-epic-groups'
 
 export type BeadsTaskSurfaceModel = BeadsMutationsModel & {
+  groupByEpic: boolean
+  setGroupByEpic: (grouped: boolean) => void
+  epicGroups: BeadsEpicGroupsModel
   filterState: BeadsFilterState
   setFilterState: (next: BeadsFilterState) => void
   items: BeadsWorkItem[]
@@ -82,6 +86,7 @@ export function useBeadsTaskSurface(ctx: BeadsRepoContext | null): BeadsTaskSurf
   const [detailError, setDetailError] = useState<ClassifiedError | null>(null)
   const [detailNonce, setDetailNonce] = useState(0)
   const [createOpen, setCreateOpen] = useState(false)
+  const [groupByEpic, setGroupByEpic] = useState(false)
 
   const key = ctxKey(ctx)
   const filterSignature = useMemo(
@@ -195,6 +200,8 @@ export function useBeadsTaskSurface(ctx: BeadsRepoContext | null): BeadsTaskSurf
     onCreated: closeCreate
   })
 
+  const epicGroups = useBeadsEpicGroups({ ctx, enabled: groupByEpic, items, refreshNonce })
+
   const labelSuggestions = useMemo(
     () => uniqueSorted([...labels, ...items.flatMap((item) => item.labels)]),
     [labels, items]
@@ -207,6 +214,9 @@ export function useBeadsTaskSurface(ctx: BeadsRepoContext | null): BeadsTaskSurf
 
   return {
     ...mutations,
+    groupByEpic,
+    setGroupByEpic,
+    epicGroups,
     filterState,
     setFilterState,
     items,
