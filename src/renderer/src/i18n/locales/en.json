@@ -13251,7 +13251,8 @@
       "confirmClose": "Close issue",
       "reopen": "Reopen",
       "closeIssue": "Close issue",
-      "back": "Back"
+      "back": "Back",
+      "startWork": "Start work"
     },
     "list": {
       "error": "Could not load Beads issues for this repository.",
