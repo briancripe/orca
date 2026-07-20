@@ -56,7 +56,7 @@ const DEFAULT_CHILDREN_LIMIT = 50
 export async function listChildren(
   repoPath: string,
   parentId: string,
-  opts: BdCallOptions & { limit?: number } = {}
+  opts: BdCallOptions & { limit?: number; includeClosed?: boolean } = {}
 ): Promise<BeadsChildrenResult> {
   try {
     const { stdout } = await bdRead(
@@ -68,7 +68,11 @@ export async function listChildren(
         '--parent',
         parentId,
         '--limit',
-        String(opts.limit ?? DEFAULT_CHILDREN_LIMIT)
+        String(opts.limit ?? DEFAULT_CHILDREN_LIMIT),
+        // Why --all: bd's default `list` filter omits closed issues, so
+        // callers that need closed children (e.g. getEpicProgress) must
+        // opt in explicitly rather than losing them silently.
+        ...(opts.includeClosed ? ['--all'] : [])
       ],
       opts
     )
@@ -125,6 +129,6 @@ export async function getEpicProgress(
   epicId: string,
   opts: BdCallOptions & { limit?: number } = {}
 ): Promise<BeadsEpicProgressResult> {
-  const { items, error } = await listChildren(repoPath, epicId, opts)
+  const { items, error } = await listChildren(repoPath, epicId, { ...opts, includeClosed: true })
   return { progress: summarizeEpicProgress(items), ...(error ? { error } : {}) }
 }
