@@ -13249,7 +13249,8 @@
       "closeReason": "Reason (optional)",
       "confirmClose": "Close issue",
       "reopen": "Reopen",
-      "closeIssue": "Close issue"
+      "closeIssue": "Close issue",
+      "back": "Back"
     },
     "list": {
       "error": "Could not load Beads issues for this repository.",
@@ -13282,7 +13283,14 @@
       "relatesTo": "Relates to",
       "discoveredFrom": "Discovered from",
       "duplicates": "Duplicates",
-      "supersedes": "Supersedes"
+      "supersedes": "Supersedes",
+      "confirmRemove": "Remove",
+      "cancelRemove": "Cancel",
+      "removeAria": "Remove dependency {{value0}}",
+      "blockedBy": "Blocked by open issues",
+      "dismiss": "Dismiss",
+      "addAria": "Add a blocking dependency",
+      "addPlaceholder": "Block on… (search id or title)"
     },
     "status": {
       "open": "Open",
@@ -13296,7 +13304,9 @@
     "error": {
       "loadList": "Failed to load Beads issues.",
       "notFound": "Issue not found.",
-      "loadDetail": "Failed to load issue."
+      "loadDetail": "Failed to load issue.",
+      "addDependency": "Could not add the dependency.",
+      "removeDependency": "Could not remove the dependency."
     },
     "source": {
       "label": "Beads"

@@ -3,21 +3,18 @@
    detail / diagnose) into local render state, the same pattern the other
    provider surfaces use. */
 /* Store-wiring hook for the beads task surface. Owns filter state, the list /
-   detail fetch lifecycle, and every mutation handler; each mutation re-triggers
-   the list + open-detail loads (the slice has already invalidated their caches,
-   so the re-load fetches fresh) — this is the "invalidate + refresh" contract
-   the acceptance criteria exercise. Kept separate from the view so the flows
-   can be driven against a mocked store. */
+   detail fetch lifecycle, and dialog navigation; mutation handlers live in
+   use-beads-mutations.ts and re-trigger these loads on settle (the slice has
+   already invalidated the caches, so the re-load fetches fresh). Kept separate
+   from the view so the flows can be driven against a mocked store. */
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
 import type {
-  BeadsCreateInput,
   BeadsDiagnosticsResult,
   BeadsIssueDetail,
   BeadsRepoContext
 } from '@/store/slices/beads-cache'
-import type { BeadsIssueUpdate } from '@/store/slices/beads'
 import type { BeadsWorkItem } from '../../../../shared/beads-types'
 import type { ClassifiedError } from '../../../../shared/types'
 import {
@@ -25,8 +22,9 @@ import {
   toBeadsIssueFilters,
   type BeadsFilterState
 } from './beads-filter-model'
+import { useBeadsMutations, type BeadsMutationsModel } from './use-beads-mutations'
 
-export type BeadsTaskSurfaceModel = {
+export type BeadsTaskSurfaceModel = BeadsMutationsModel & {
   filterState: BeadsFilterState
   setFilterState: (next: BeadsFilterState) => void
   items: BeadsWorkItem[]
@@ -40,21 +38,14 @@ export type BeadsTaskSurfaceModel = {
   issueDetail: BeadsIssueDetail | null
   detailLoading: boolean
   detailError: ClassifiedError | null
-  savingEdit: boolean
-  commenting: boolean
-  changingStatus: boolean
+  canGoBack: boolean
   createOpen: boolean
-  creating: boolean
   openItem: (item: BeadsWorkItem) => void
   navigateToIssue: (id: string) => void
+  back: () => void
   closeDialog: () => void
   refresh: () => void
   setCreateOpen: (open: boolean) => void
-  createIssue: (input: BeadsCreateInput) => void
-  saveEdit: (update: BeadsIssueUpdate) => void
-  addComment: (text: string) => void
-  closeIssue: (reason?: string) => void
-  reopenIssue: (reason?: string) => void
   reloadDetail: (id: string) => void
 }
 
@@ -73,11 +64,6 @@ export function useBeadsTaskSurface(ctx: BeadsRepoContext | null): BeadsTaskSurf
   const loadBeadsIssueDetails = useAppStore((s) => s.loadBeadsIssueDetails)
   const loadBeadsLabels = useAppStore((s) => s.loadBeadsLabels)
   const beadsDiagnose = useAppStore((s) => s.beadsDiagnose)
-  const createBeadsIssue = useAppStore((s) => s.createBeadsIssue)
-  const updateBeadsIssue = useAppStore((s) => s.updateBeadsIssue)
-  const closeBeadsIssue = useAppStore((s) => s.closeBeadsIssue)
-  const reopenBeadsIssue = useAppStore((s) => s.reopenBeadsIssue)
-  const addBeadsComment = useAppStore((s) => s.addBeadsComment)
 
   const [filterState, setFilterState] = useState<BeadsFilterState>(EMPTY_BEADS_FILTER_STATE)
   const [items, setItems] = useState<BeadsWorkItem[]>([])
@@ -87,17 +73,15 @@ export function useBeadsTaskSurface(ctx: BeadsRepoContext | null): BeadsTaskSurf
   const [labels, setLabels] = useState<string[]>([])
   const [refreshNonce, setRefreshNonce] = useState(0)
 
-  const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null)
+  // Why: a nav stack (not a single id) so chip navigation into a dependency
+  // can be walked back — the top of the stack is the issue currently shown.
+  const [navStack, setNavStack] = useState<string[]>([])
+  const selectedIssueId = navStack.at(-1) ?? null
   const [issueDetail, setIssueDetail] = useState<BeadsIssueDetail | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
   const [detailError, setDetailError] = useState<ClassifiedError | null>(null)
   const [detailNonce, setDetailNonce] = useState(0)
-
-  const [savingEdit, setSavingEdit] = useState(false)
-  const [commenting, setCommenting] = useState(false)
-  const [changingStatus, setChangingStatus] = useState(false)
   const [createOpen, setCreateOpen] = useState(false)
-  const [creating, setCreating] = useState(false)
 
   const key = ctxKey(ctx)
   const filterSignature = useMemo(
@@ -116,11 +100,10 @@ export function useBeadsTaskSurface(ctx: BeadsRepoContext | null): BeadsTaskSurf
     setListLoading(true)
     void loadBeadsWorkItems(ctx, toBeadsIssueFilters(filterState))
       .then((result) => {
-        if (cancelled) {
-          return
+        if (!cancelled) {
+          setItems(result.items)
+          setListError(result.error ?? null)
         }
-        setItems(result.items)
-        setListError(result.error ?? null)
       })
       .catch(() => {
         if (!cancelled) {
@@ -149,16 +132,8 @@ export function useBeadsTaskSurface(ctx: BeadsRepoContext | null): BeadsTaskSurf
       return
     }
     let cancelled = false
-    void beadsDiagnose(ctx).then((result) => {
-      if (!cancelled) {
-        setDiagnostics(result)
-      }
-    })
-    void loadBeadsLabels(ctx).then((result) => {
-      if (!cancelled) {
-        setLabels(result.items)
-      }
-    })
+    void beadsDiagnose(ctx).then((result) => !cancelled && setDiagnostics(result))
+    void loadBeadsLabels(ctx).then((result) => !cancelled && setLabels(result.items))
     return () => {
       cancelled = true
     }
@@ -209,86 +184,16 @@ export function useBeadsTaskSurface(ctx: BeadsRepoContext | null): BeadsTaskSurf
 
   const refresh = useCallback(() => setRefreshNonce((nonce) => nonce + 1), [])
   const reloadDetail = useCallback((_id: string) => setDetailNonce((nonce) => nonce + 1), [])
+  const bumpDetailNonce = useCallback(() => setDetailNonce((nonce) => nonce + 1), [])
+  const closeCreate = useCallback(() => setCreateOpen(false), [])
 
-  const runMutation = useCallback(
-    async (
-      setBusy: (busy: boolean) => void,
-      run: () => Promise<unknown>,
-      options: { reloadDetail?: boolean } = {}
-    ): Promise<void> => {
-      setBusy(true)
-      try {
-        await run()
-      } finally {
-        setBusy(false)
-        setRefreshNonce((nonce) => nonce + 1)
-        if (options.reloadDetail) {
-          setDetailNonce((nonce) => nonce + 1)
-        }
-      }
-    },
-    []
-  )
-
-  const createIssue = useCallback(
-    (input: BeadsCreateInput) => {
-      if (!ctx) {
-        return
-      }
-      void runMutation(setCreating, () => createBeadsIssue(ctx, input)).then(() =>
-        setCreateOpen(false)
-      )
-    },
-    [ctx, createBeadsIssue, runMutation]
-  )
-
-  const saveEdit = useCallback(
-    (update: BeadsIssueUpdate) => {
-      if (!ctx || !selectedIssueId) {
-        return
-      }
-      void runMutation(setSavingEdit, () => updateBeadsIssue(ctx, selectedIssueId, update), {
-        reloadDetail: true
-      })
-    },
-    [ctx, selectedIssueId, updateBeadsIssue, runMutation]
-  )
-
-  const addComment = useCallback(
-    (text: string) => {
-      if (!ctx || !selectedIssueId) {
-        return
-      }
-      void runMutation(setCommenting, () => addBeadsComment(ctx, selectedIssueId, text), {
-        reloadDetail: true
-      })
-    },
-    [ctx, selectedIssueId, addBeadsComment, runMutation]
-  )
-
-  const closeIssue = useCallback(
-    (reason?: string) => {
-      if (!ctx || !selectedIssueId) {
-        return
-      }
-      void runMutation(setChangingStatus, () => closeBeadsIssue(ctx, selectedIssueId, reason), {
-        reloadDetail: true
-      })
-    },
-    [ctx, selectedIssueId, closeBeadsIssue, runMutation]
-  )
-
-  const reopenIssue = useCallback(
-    (reason?: string) => {
-      if (!ctx || !selectedIssueId) {
-        return
-      }
-      void runMutation(setChangingStatus, () => reopenBeadsIssue(ctx, selectedIssueId, reason), {
-        reloadDetail: true
-      })
-    },
-    [ctx, selectedIssueId, reopenBeadsIssue, runMutation]
-  )
+  const mutations = useBeadsMutations({
+    ctx,
+    selectedIssueId,
+    onRefresh: refresh,
+    onReloadDetail: bumpDetailNonce,
+    onCreated: closeCreate
+  })
 
   const labelSuggestions = useMemo(
     () => uniqueSorted([...labels, ...items.flatMap((item) => item.labels)]),
@@ -301,6 +206,7 @@ export function useBeadsTaskSurface(ctx: BeadsRepoContext | null): BeadsTaskSurf
   const typeSuggestions = useMemo(() => uniqueSorted(items.map((item) => item.issueType)), [items])
 
   return {
+    ...mutations,
     filterState,
     setFilterState,
     items,
@@ -314,21 +220,23 @@ export function useBeadsTaskSurface(ctx: BeadsRepoContext | null): BeadsTaskSurf
     issueDetail,
     detailLoading,
     detailError,
-    savingEdit,
-    commenting,
-    changingStatus,
+    canGoBack: navStack.length > 1,
     createOpen,
-    creating,
-    openItem: (item) => setSelectedIssueId(item.id),
-    navigateToIssue: (id) => setSelectedIssueId(id),
-    closeDialog: () => setSelectedIssueId(null),
+    openItem: (item) => {
+      mutations.clearDependencyError()
+      setNavStack([item.id])
+    },
+    navigateToIssue: (id) => {
+      mutations.clearDependencyError()
+      setNavStack((stack) => [...stack, id])
+    },
+    back: () => setNavStack((stack) => (stack.length > 1 ? stack.slice(0, -1) : stack)),
+    closeDialog: () => {
+      mutations.clearDependencyError()
+      setNavStack([])
+    },
     refresh,
     setCreateOpen,
-    createIssue,
-    saveEdit,
-    addComment,
-    closeIssue,
-    reopenIssue,
     reloadDetail
   }
 }

@@ -6,6 +6,7 @@ import { BeadsFilterBar } from './BeadsFilterBar'
 import { BeadsWorkItemList } from './BeadsWorkItemList'
 import { BeadsItemDialog } from './BeadsItemDialog'
 import { BeadsCreateDialog } from './BeadsCreateDialog'
+import { BeadsDependencyEditor } from './BeadsDependencyEditor'
 import { useBeadsTaskSurface } from './use-beads-task-surface'
 
 // Why: the whole beads tab body lives here so TaskPage only wires the tab
@@ -52,11 +53,28 @@ export function BeadsTaskSurface({ ctx }: { ctx: BeadsRepoContext | null }): Rea
         savingEdit={model.savingEdit}
         commenting={model.commenting}
         changingStatus={model.changingStatus}
+        canGoBack={model.canGoBack}
+        onBack={model.back}
         onClose={model.closeDialog}
         onSaveEdit={model.saveEdit}
         onAddComment={model.addComment}
         onCloseIssue={model.closeIssue}
         onReopenIssue={model.reopenIssue}
+        dependencySlot={
+          model.issueDetail ? (
+            <BeadsDependencyEditor
+              issue={model.issueDetail}
+              pickerItems={model.items}
+              adding={model.addingDependency}
+              removing={model.removingDependency}
+              error={model.dependencyError}
+              onNavigate={model.navigateToIssue}
+              onAddDependency={model.addDependency}
+              onRemoveDependency={model.removeDependency}
+              onClearError={model.clearDependencyError}
+            />
+          ) : undefined
+        }
       />
 
       <BeadsCreateDialog

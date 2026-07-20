@@ -2,7 +2,7 @@
    reseeds its edit form + reason panels from the freshly-fetched bd issue when
    the selected issue identity changes, mirroring GitLabItemDialog. */
 import React, { useEffect, useState } from 'react'
-import { Check, LoaderCircle, Pencil, RotateCcw, X } from 'lucide-react'
+import { ArrowLeft, Check, LoaderCircle, Pencil, RotateCcw, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/sheet'
@@ -36,6 +36,9 @@ export type BeadsItemDialogProps = {
   onAddComment: (text: string) => void
   onCloseIssue: (reason?: string) => void
   onReopenIssue: (reason?: string) => void
+  // Back-navigation for chip-driven dependency navigation (bead orca-0cc.14).
+  canGoBack?: boolean
+  onBack?: () => void
   // Slot for the interactive dependency surface (bead orca-0cc.14). Falls back
   // to the read-only grouped view when not provided.
   dependencySlot?: React.ReactNode
@@ -110,6 +113,17 @@ export function BeadsItemDialog(props: BeadsItemDialogProps): React.JSX.Element 
           <>
             <header className="flex flex-none flex-col gap-2 border-b border-border/50 px-5 py-4">
               <div className="flex items-center gap-2">
+                {props.canGoBack ? (
+                  <Button
+                    type="button"
+                    size="icon-sm"
+                    variant="ghost"
+                    onClick={props.onBack}
+                    aria-label={translate('beads.dialog.back', 'Back')}
+                  >
+                    <ArrowLeft className="size-4" />
+                  </Button>
+                ) : null}
                 <BeadsPriorityBadge priority={issue.priority} />
                 <BeadsStatusBadge status={issue.status} />
                 <span className="font-mono text-xs text-muted-foreground">{issue.id}</span>

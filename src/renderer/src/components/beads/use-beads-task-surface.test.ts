@@ -12,7 +12,9 @@ const actions = {
   updateBeadsIssue: vi.fn(() => Promise.resolve({ ok: true })),
   closeBeadsIssue: vi.fn(() => Promise.resolve({ ok: true })),
   reopenBeadsIssue: vi.fn(() => Promise.resolve({ ok: true })),
-  addBeadsComment: vi.fn(() => Promise.resolve({ ok: true }))
+  addBeadsComment: vi.fn(() => Promise.resolve({ ok: true })),
+  addBeadsDependency: vi.fn(() => Promise.resolve({ ok: true } as const)),
+  removeBeadsDependency: vi.fn(() => Promise.resolve({ ok: true } as const))
 }
 
 vi.mock('@/store', () => ({
@@ -88,5 +90,72 @@ describe('useBeadsTaskSurface mutation flows', () => {
     await waitFor(() =>
       expect(actions.loadBeadsWorkItems.mock.calls.length).toBeGreaterThanOrEqual(2)
     )
+  })
+})
+
+function selectIssue(result: { current: ReturnType<typeof useBeadsTaskSurface> }): void {
+  act(() =>
+    result.current.openItem({
+      id: 'orca-1',
+      title: 't',
+      status: 'open',
+      priority: 0,
+      issueType: 'bug',
+      labels: [],
+      updatedAt: '2026-07-01T00:00:00Z',
+      repoId: 'repo-1'
+    })
+  )
+}
+
+describe('useBeadsTaskSurface dependency navigation', () => {
+  it('preserves back-navigation across chip navigation', async () => {
+    const { result } = renderHook(() => useBeadsTaskSurface(ctx))
+    selectIssue(result)
+    expect(result.current.selectedIssueId).toBe('orca-1')
+    expect(result.current.canGoBack).toBe(false)
+
+    act(() => result.current.navigateToIssue('orca-9'))
+    expect(result.current.selectedIssueId).toBe('orca-9')
+    expect(result.current.canGoBack).toBe(true)
+
+    act(() => result.current.back())
+    expect(result.current.selectedIssueId).toBe('orca-1')
+    expect(result.current.canGoBack).toBe(false)
+  })
+
+  it('adds a dependency and refreshes the detail', async () => {
+    const { result } = renderHook(() => useBeadsTaskSurface(ctx))
+    selectIssue(result)
+    await act(async () => {
+      result.current.addDependency('orca-2')
+      await Promise.resolve()
+    })
+    expect(actions.addBeadsDependency).toHaveBeenCalledWith(ctx, 'orca-1', 'orca-2')
+    await waitFor(() => expect(result.current.dependencyError).toBeNull())
+  })
+
+  it('removes a dependency', async () => {
+    const { result } = renderHook(() => useBeadsTaskSurface(ctx))
+    selectIssue(result)
+    await act(async () => {
+      result.current.removeDependency('orca-2')
+      await Promise.resolve()
+    })
+    expect(actions.removeBeadsDependency).toHaveBeenCalledWith(ctx, 'orca-1', 'orca-2')
+  })
+
+  it('surfaces a cycle error inline instead of throwing', async () => {
+    actions.addBeadsDependency.mockResolvedValueOnce({
+      ok: false,
+      error: { type: 'validation_error', message: 'cycle detected' }
+    } as never)
+    const { result } = renderHook(() => useBeadsTaskSurface(ctx))
+    selectIssue(result)
+    await act(async () => {
+      result.current.addDependency('orca-2')
+      await Promise.resolve()
+    })
+    await waitFor(() => expect(result.current.dependencyError?.message).toBe('cycle detected'))
   })
 })
