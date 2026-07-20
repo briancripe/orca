@@ -48,6 +48,9 @@ import { runBeadsMutation, runCachedBeadsRead } from './beads-request-runner'
 export type { BeadsRepoContext } from './beads-cache'
 
 type BeadsUpdateInput = Parameters<typeof beadsUpdateIssue>[1]['updates']
+// Why: re-exported so the renderer edit form (beads-issue-edit-model) can build
+// a well-typed update diff without re-declaring bd's update shape.
+export type BeadsIssueUpdate = BeadsUpdateInput
 export type BeadsIssueMutationResult = Awaited<ReturnType<typeof beadsCreateIssue>>
 export type BeadsCommentMutationResult = Awaited<ReturnType<typeof beadsAddIssueComment>>
 export type BeadsOkResult = Awaited<ReturnType<typeof beadsAddDependency>>

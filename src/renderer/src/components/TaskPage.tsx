@@ -144,6 +144,8 @@ import { useRepoAssigneesBySlug } from '@/hooks/useGitHubSlugMetadata'
 import GitHubItemDialog, { type ItemDialogTab } from '@/components/GitHubItemDialog'
 import PullRequestPage from '@/components/PullRequestPage'
 import GitLabItemDialog from '@/components/GitLabItemDialog'
+import { BeadsTaskSurface } from '@/components/beads/BeadsTaskSurface'
+import type { BeadsRepoContext } from '@/store/slices/beads-cache'
 import ProjectViewWrapper from '@/components/github-project/ProjectViewWrapper'
 import { getSettingsForRepoRuntimeOwner } from '@/lib/repo-runtime-owner'
 import {
@@ -3206,6 +3208,12 @@ export default function TaskPage(): React.JSX.Element {
   // optimistic stub) need *a* repo. First selected is used as the default;
   // cross-repo dialogs still let the user override per-action.
   const primaryRepo = selectedRepos[0] ?? null
+  // Why: beads is repo-scoped (like GitLab) with no account/project to select —
+  // the primary selected repo's path + id identify its `.beads/` store.
+  const beadsRepoContext = useMemo<BeadsRepoContext | null>(
+    () => (primaryRepo?.path ? { repoPath: primaryRepo.path, repoId: primaryRepo.id } : null),
+    [primaryRepo]
+  )
   const linearWorkspaces = linearStatus.workspaces ?? []
   const selectedLinearWorkspaceId =
     linearStatus.selectedWorkspaceId ??
@@ -9256,7 +9264,11 @@ export default function TaskPage(): React.JSX.Element {
             </section>
           </div>
 
-          {taskSource === 'github' && dialogWorkItem ? (
+          {taskSource === 'beads' ? (
+            <div className="mt-3 flex min-h-0 min-w-0 max-h-full flex-1 flex-col">
+              <BeadsTaskSurface ctx={beadsRepoContext} />
+            </div>
+          ) : taskSource === 'github' && dialogWorkItem ? (
             dialogWorkItem.type === 'pr' ? (
               <PullRequestPage
                 workItem={dialogWorkItem}
