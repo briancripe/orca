@@ -5,6 +5,7 @@ import { contextBridge, ipcRenderer, webFrame, webUtils } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 import { preloadE2EConfig } from './e2e-config'
 import { glApi } from './gitlab'
+import { beadsApi } from './beads'
 import type { AppIdentity } from '../shared/app-identity'
 import type { CliInstallStatus } from '../shared/cli-install-types'
 import type { AgentHookInstallStatus } from '../shared/agent-hook-types'
@@ -1582,6 +1583,11 @@ const api = {
   // `gl.*` channel doesn't surface as a merge conflict on every
   // upstream sync of this central preload file.
   gl: glApi,
+
+  // Why: Beads bindings live in `./beads` so adding or changing a
+  // `beads.*` channel doesn't surface as a merge conflict on every
+  // upstream sync of this central preload file (same rationale as `gl`).
+  beads: beadsApi,
 
   linear: {
     connect: (args: {
