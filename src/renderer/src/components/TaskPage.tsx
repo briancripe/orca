@@ -302,6 +302,7 @@ import type {
   TaskProvider,
   TaskViewPresetId
 } from '../../../shared/types'
+import type { BeadsIssueInfo } from '../../../shared/beads-types'
 import type { PreflightStatus } from '../../../preload/api-types'
 import type { GitLabProjectRef } from '../../../shared/gitlab-types'
 import {
@@ -8134,7 +8135,12 @@ export default function TaskPage(): React.JSX.Element {
   )
 
   const handleStartWorkFromBeads = useCallback(
-    (issue: { id: string; title: string }): void => {
+    (
+      issue: {
+        id: string
+        title: string
+      } & Pick<BeadsIssueInfo, 'description' | 'design' | 'acceptanceCriteria' | 'notes'>
+    ): void => {
       // Why: mirror the Jira/Linear "start work" flow — open the New Workspace
       // dialog pre-filled with a beads-linked task (url '' since beads has no
       // hosted page) rather than yolo-creating the worktree.
