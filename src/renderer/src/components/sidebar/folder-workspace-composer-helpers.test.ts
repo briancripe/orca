@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import type { ProjectGroup, Repo } from '../../../../shared/types'
 import {
   getFolderSourceRepos,
-  getFolderWorkspacePrimaryActionLabel
+  getFolderWorkspacePrimaryActionLabel,
+  toBeadsLinkedWorkItem
 } from './folder-workspace-composer-helpers'
 
 function repo(id: string, overrides: Partial<Repo> = {}): Repo {
@@ -87,5 +88,28 @@ describe('getFolderWorkspacePrimaryActionLabel', () => {
 
     expect(label).toBe('Create workspace')
     expect(label).not.toContain('Agent')
+  })
+})
+
+describe('toBeadsLinkedWorkItem', () => {
+  it('attaches the bead body as linkedContext so the composer can inject it', () => {
+    const item = toBeadsLinkedWorkItem({
+      id: 'orca-42',
+      title: 'Fix the thing',
+      description: 'Do the thing',
+      acceptanceCriteria: 'It works'
+    })
+
+    expect(item.linkedContext).toEqual({
+      provider: 'beads',
+      version: 1,
+      renderedText: '## Description\nDo the thing\n\n## Acceptance Criteria\nIt works'
+    })
+  })
+
+  it('omits linkedContext when the bead has no body content', () => {
+    const item = toBeadsLinkedWorkItem({ id: 'orca-42', title: 'Fix the thing' })
+
+    expect(item.linkedContext).toBeUndefined()
   })
 })

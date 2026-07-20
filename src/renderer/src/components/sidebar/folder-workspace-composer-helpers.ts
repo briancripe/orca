@@ -1,5 +1,9 @@
 import type { LinkedWorkItemSummary } from '@/lib/new-workspace'
 import {
+  formatBeadsIssueRenderedText,
+  type BeadsIssueBodyFields
+} from '@/lib/linked-work-item-context'
+import {
   buildBeadsWorkspaceSource,
   buildGitHubWorkspaceSource,
   buildGitLabWorkspaceSource,
@@ -103,8 +107,14 @@ export function toLinearLinkedWorkItem(issue: LinearIssue): LinkedWorkItemSummar
   return buildLinearWorkspaceSource(issue)
 }
 
-export function toBeadsLinkedWorkItem(issue: { id: string; title: string }): LinkedWorkItemSummary {
-  return buildBeadsWorkspaceSource(issue)
+export function toBeadsLinkedWorkItem(
+  issue: { id: string; title: string } & BeadsIssueBodyFields
+): LinkedWorkItemSummary {
+  const base = buildBeadsWorkspaceSource(issue)
+  const renderedText = formatBeadsIssueRenderedText(issue)
+  return renderedText
+    ? { ...base, linkedContext: { provider: 'beads', version: 1, renderedText } }
+    : base
 }
 
 export function getFolderWorkspacePrimaryActionLabel(): string {

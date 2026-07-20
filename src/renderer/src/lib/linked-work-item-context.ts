@@ -65,6 +65,29 @@ export type LinearLaunchContextArgs = {
   url?: string
 }
 
+export type BeadsIssueBodyFields = {
+  description?: string
+  design?: string
+  acceptanceCriteria?: string
+  notes?: string
+}
+
+// Why: beads has no hosted page, so the composer's `{{artifact_url}}` template
+// resolves to an empty string for beads issues — the bead's prose is the only
+// content that can stand in for it.
+export function formatBeadsIssueRenderedText(issue: BeadsIssueBodyFields): string {
+  const sections: [string, string | undefined][] = [
+    ['Description', issue.description],
+    ['Design', issue.design],
+    ['Acceptance Criteria', issue.acceptanceCriteria],
+    ['Notes', issue.notes]
+  ]
+  return sections
+    .filter((section): section is [string, string] => Boolean(section[1]?.trim()))
+    .map(([heading, value]) => `## ${heading}\n${value.trim()}`)
+    .join('\n\n')
+}
+
 function isLinearWorkItemReference(
   args:
     | {
@@ -169,6 +192,13 @@ export function getLinkedWorkItemPromptContext(
     return linearBlock
       ? { linkedUrls: [], linkedContextBlocks: [linearBlock] }
       : { linkedUrls: [], linkedContextBlocks: [] }
+  }
+  // Why: any provider (currently beads) can carry prose via `linkedContext`
+  // instead of a hosted URL — surface it the same way Linear's block is
+  // surfaced above rather than falling through to an empty `url`.
+  const containedBlock = buildContainedLinkedContextBlock(linkedWorkItem?.linkedContext)
+  if (containedBlock) {
+    return { linkedUrls: [], linkedContextBlocks: [containedBlock] }
   }
   const linkedUrl = linkedWorkItem?.url?.trim()
   return linkedUrl
