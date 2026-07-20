@@ -255,12 +255,20 @@ export function resolveQuickCreateLinkedWorkItemPrompt(
       })
     : null
   const linearDraft = linearBlock ? formatDraftContextBlock(linearBlock) : null
+  // Why: any provider (currently beads) without a hosted URL can carry prose
+  // via `linkedContext` instead — same fallback as getLinkedWorkItemPromptContext.
+  const containedBlock = linearDraft
+    ? null
+    : buildContainedLinkedContextBlock(linkedWorkItem?.linkedContext)
+  const containedDraft = containedBlock ? formatDraftContextBlock(containedBlock) : null
   const linkedUrl = linkedWorkItem?.url?.trim() || null
   const draftPrompt = linearDraft
     ? [trimmedNote, linearDraft].filter(Boolean).join('\n\n')
-    : linkedUrl
-      ? [trimmedNote, linkedUrl].filter(Boolean).join('\n\n')
-      : null
+    : containedDraft
+      ? [trimmedNote, containedDraft].filter(Boolean).join('\n\n')
+      : linkedUrl
+        ? [trimmedNote, linkedUrl].filter(Boolean).join('\n\n')
+        : null
   const isLinearTypedOnly = linkedWorkItem?.number === 0 && Boolean(trimmedNote) && !draftPrompt
   return {
     prompt: isLinearTypedOnly ? trimmedNote : '',
