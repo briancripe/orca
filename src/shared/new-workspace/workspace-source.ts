@@ -30,6 +30,11 @@ export type LinearWorkspaceSource = WorkspaceSourceLinkedItem & {
   type: 'issue'
 }
 
+export type BeadsWorkspaceSource = WorkspaceSourceLinkedItem & {
+  provider: 'beads'
+  type: 'issue'
+}
+
 export type WorkspaceSourceItemLike = Omit<WorkspaceSourceLinkedItem, 'provider'> & {
   provider?: WorkspaceSourceProvider
 }
@@ -74,6 +79,12 @@ function isJiraIssueUrl(url: string): boolean {
 export function getWorkspaceSourceProvider(item: WorkspaceSourceItemLike): WorkspaceSourceProvider {
   if (item.provider) {
     return item.provider
+  }
+  // Why: beads issues carry a string identifier and the number-0 sentinel, so
+  // this must be checked BEFORE the legacy `number === 0 → linear` heuristic
+  // below — otherwise a beads item would be misread as Linear.
+  if (item.beadsIdentifier) {
+    return 'beads'
   }
   if (item.linearIdentifier) {
     return 'linear'
@@ -134,6 +145,22 @@ export function buildLinearWorkspaceSource(
     ...(issue.workspaceId ? { linearWorkspaceId: issue.workspaceId } : {}),
     ...(organizationUrlKey ? { linearOrganizationUrlKey: organizationUrlKey } : {}),
     ...(branchName ? { linearBranchName: branchName } : {})
+  }
+}
+
+export function buildBeadsWorkspaceSource(issue: {
+  id: string
+  title: string
+}): BeadsWorkspaceSource {
+  return {
+    provider: 'beads',
+    type: 'issue',
+    // Why: beads issue IDs are strings (e.g. `orca-42`) — numeric metadata stays
+    // the 0 sentinel and the web URL is empty because beads has no hosted page.
+    number: 0,
+    title: issue.title,
+    url: '',
+    beadsIdentifier: issue.id
   }
 }
 

@@ -1,4 +1,4 @@
-import { Check, Github, Gitlab } from 'lucide-react'
+import { Check, Github, Gitlab, Waypoints } from 'lucide-react'
 import type { GlobalSettings, TaskProvider } from '../../../../shared/types'
 import {
   TASK_PROVIDERS,
@@ -75,6 +75,19 @@ const TASK_PROVIDER_OPTIONS: readonly {
       )
     },
     Icon: ({ className }) => <JiraIcon className={className} />
+  },
+  {
+    id: 'beads',
+    get label() {
+      return translate('auto.components.settings.TasksPane.beads_label', 'Beads')
+    },
+    get description() {
+      return translate(
+        'auto.components.settings.TasksPane.beads_description',
+        'Show Beads in the Tasks source picker and sidebar shortcuts.'
+      )
+    },
+    Icon: ({ className }) => <Waypoints className={className} />
   }
 ]
 
@@ -123,6 +136,8 @@ export function TasksPane({ settings, updateSettings }: TasksPaneProps): React.J
             'linear',
             'jira',
             'atlassian',
+            'beads',
+            'bd',
             'display',
             'hide'
           ]}

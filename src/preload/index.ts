@@ -3,6 +3,7 @@ import { contextBridge, ipcRenderer, webFrame, webUtils } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 import { preloadE2EConfig } from './e2e-config'
 import { glApi } from './gitlab'
+import { beadsApi } from './beads'
 import type { AppIdentity } from '../shared/app-identity'
 import type { DashboardSnapshot, DashboardRevealAgentArgs } from '../shared/dashboard-snapshot'
 import type {
@@ -1535,6 +1536,11 @@ const api = {
 
   // Why: GitLab bindings live in `./gitlab` so `gl.*` changes don't conflict on every upstream sync of this central file.
   gl: glApi,
+
+  // Why: Beads bindings live in `./beads` so adding or changing a
+  // `beads.*` channel doesn't surface as a merge conflict on every
+  // upstream sync of this central preload file (same rationale as `gl`).
+  beads: beadsApi,
 
   linear: {
     connect: (args: {

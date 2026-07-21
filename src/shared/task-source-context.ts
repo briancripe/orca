@@ -38,11 +38,19 @@ export type JiraTaskProviderIdentity = {
   projectKey?: string | null
 }
 
+// Why: beads is git-repo-scoped with no separate account/project to select —
+// projectId + repoId on TaskSourceContext already identify it, so there's no
+// extra identity to carry (unlike GitHub/GitLab/Linear/Jira).
+export type BeadsTaskProviderIdentity = {
+  provider: 'beads'
+}
+
 export type TaskProviderIdentity =
   | GitHubTaskProviderIdentity
   | GitLabTaskProviderIdentity
   | LinearTaskProviderIdentity
   | JiraTaskProviderIdentity
+  | BeadsTaskProviderIdentity
 
 export type TaskSourceContext = {
   kind: 'task-source'
@@ -217,6 +225,8 @@ function providerIdentityCachePart(identity: TaskProviderIdentity | null | undef
       return [identity.workspaceId, identity.teamId ?? identity.teamKey].filter(Boolean).join('/')
     case 'jira':
       return [identity.siteId ?? identity.siteUrl, identity.projectKey].filter(Boolean).join('/')
+    case 'beads':
+      return ''
   }
 }
 

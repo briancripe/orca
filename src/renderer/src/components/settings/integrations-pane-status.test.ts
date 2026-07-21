@@ -10,6 +10,7 @@ const connectedPreflight: PreflightStatus = {
   git: { installed: true },
   gh: { installed: true, authenticated: true },
   glab: { installed: true, authenticated: true },
+  beads: { installed: true },
   bitbucket: { configured: true, authenticated: true, account: 'bb-user' },
   azureDevOps: {
     configured: true,
@@ -82,7 +83,8 @@ describe('getPreflightIntegrationStatuses', () => {
       azureDevOpsStatus: 'configured',
       azureDevOpsAccount: 'ado-user',
       giteaStatus: 'configured',
-      giteaAccount: 'gitea-user'
+      giteaAccount: 'gitea-user',
+      beadsStatus: 'connected'
     })
   })
 
@@ -95,5 +97,14 @@ describe('getPreflightIntegrationStatuses', () => {
       bitbucketStatus: 'connected',
       giteaStatus: 'checking'
     })
+  })
+
+  it('reports bd as not installed when absent from preflight state, even without other providers', () => {
+    expect(
+      getPreflightIntegrationStatuses(
+        { git: { installed: true }, gh: connectedPreflight.gh },
+        new Set()
+      )
+    ).toMatchObject({ beadsStatus: 'not-installed' })
   })
 })

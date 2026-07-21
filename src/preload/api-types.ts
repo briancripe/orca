@@ -246,6 +246,13 @@ import type {
   WarpThemeImportSource
 } from '../shared/terminal-custom-themes'
 
+import type {
+  BeadsComment,
+  BeadsIssueInfo,
+  BeadsIssuePriority,
+  BeadsIssueStatus,
+  BeadsWorkItem
+} from '../shared/beads-types'
 import type { SetupScriptImportCandidate } from '../shared/setup-script-imports'
 import type { GitHistoryOptions, GitHistoryResult } from '../shared/git-history'
 import type { PublicKnownRuntimeEnvironment } from '../shared/runtime-environments'
@@ -497,6 +504,76 @@ type GitHubRepoSelectorArgs = {
   sourceContext?: TaskSourceContext | null
 }
 
+type BeadsRepoSelectorArgs = {
+  repoPath: string
+  repoId?: string | null
+  sourceContext?: TaskSourceContext | null
+}
+
+// Why: id-bearing beads channels carry a string id (bd ids are opaque strings
+// like `orca-42`), validated main-side against flag-smuggling before spawn.
+type BeadsWorkItemArgs = BeadsRepoSelectorArgs & { id: string }
+
+type BeadsDiagnostics = {
+  bdAvailable: boolean
+  version?: string
+  repoInitialized: boolean
+  error?: ClassifiedError
+}
+
+type BeadsIssueFilters = {
+  status?: BeadsIssueStatus[]
+  ready?: boolean
+  type?: string
+  assignee?: string
+  label?: string
+  parent?: string
+  titleContains?: string
+  limit?: number
+}
+
+type BeadsIssueCreateInput = {
+  title: string
+  description?: string
+  design?: string
+  acceptanceCriteria?: string
+  notes?: string
+  type?: string
+  priority?: BeadsIssuePriority
+  assignee?: string
+  labels?: string[]
+  parent?: string
+  externalRef?: string
+}
+
+type BeadsIssueUpdate = {
+  title?: string
+  description?: string
+  design?: string
+  acceptanceCriteria?: string
+  notes?: string
+  status?: BeadsIssueStatus
+  type?: string
+  priority?: BeadsIssuePriority
+  assignee?: string
+  addLabels?: string[]
+  removeLabels?: string[]
+  parent?: string | null
+  externalRef?: string
+}
+
+type BeadsIssueMutationResult =
+  | { ok: true; issue: BeadsIssueInfo }
+  | { ok: false; error: ClassifiedError }
+
+type BeadsCommentMutationResult =
+  | { ok: true; comment: BeadsComment }
+  | { ok: false; error: ClassifiedError }
+
+type BeadsStringListResult = { items: string[]; error?: ClassifiedError }
+
+type BeadsOkResult = { ok: true } | { ok: false; error: ClassifiedError }
+
 export type BrowserApi = {
   registerGuest: (args: {
     browserPageId: string
@@ -630,6 +707,10 @@ export type PreflightStatus = {
   gh: { installed: boolean; authenticated: boolean }
   /** Optional — older preload payloads predating GitLab support omit it; consumers gate on `glab?.installed`. */
   glab?: { installed: boolean; authenticated: boolean }
+  /** Optional — same back-compat reason as glab. bd has no hosted auth, so
+   *  this is install-only (global "is bd on PATH", not the per-repo `.beads/`
+   *  check, which is a separate diagnose concern run on the owning host). */
+  beads?: { installed: boolean }
   bitbucket?: { configured: boolean; authenticated: boolean; account: string | null }
   azureDevOps?: {
     configured: boolean
@@ -1924,6 +2005,45 @@ export type PreloadApi = {
         type: 'issue' | 'mr'
       }
     ) => Promise<Omit<GitLabWorkItem, 'repoId'> | null>
+  }
+  // ── Beads (`bd`) — repo-scoped local issue tracker. Parallels gl.* /
+  // gh.* one-to-one where the data matches; the id-bearing channels take a
+  // string id (validated main-side against flag-smuggling) rather than the
+  // integer number gitlab/github issues use.
+  beads: {
+    diagnose: (args: BeadsRepoSelectorArgs) => Promise<BeadsDiagnostics>
+    listIssues: (
+      args: BeadsRepoSelectorArgs & { filters?: BeadsIssueFilters }
+    ) => Promise<{ items: BeadsWorkItem[]; error?: ClassifiedError }>
+    /** Tasks-screen unified list surface — beads has no MR concept, so it
+     *  mirrors listIssues (kept distinct to parallel gl.listWorkItems). */
+    listWorkItems: (
+      args: BeadsRepoSelectorArgs & { filters?: BeadsIssueFilters }
+    ) => Promise<{ items: BeadsWorkItem[]; error?: ClassifiedError }>
+    issue: (args: BeadsWorkItemArgs) => Promise<BeadsIssueInfo | null>
+    /** Aggregated dialog payload — for beads a single `bd show
+     *  --include-comments` already yields comments + dependencies. */
+    workItemDetails: (args: BeadsWorkItemArgs) => Promise<BeadsIssueInfo | null>
+    createIssue: (
+      args: BeadsRepoSelectorArgs & { input: BeadsIssueCreateInput }
+    ) => Promise<BeadsIssueMutationResult>
+    updateIssue: (
+      args: BeadsWorkItemArgs & { updates: BeadsIssueUpdate }
+    ) => Promise<BeadsIssueMutationResult>
+    closeIssue: (args: BeadsWorkItemArgs & { reason?: string }) => Promise<BeadsIssueMutationResult>
+    reopenIssue: (
+      args: BeadsWorkItemArgs & { reason?: string }
+    ) => Promise<BeadsIssueMutationResult>
+    addIssueComment: (
+      args: BeadsWorkItemArgs & { text: string }
+    ) => Promise<BeadsCommentMutationResult>
+    listLabels: (args: BeadsRepoSelectorArgs) => Promise<BeadsStringListResult>
+    addDependency: (
+      args: BeadsRepoSelectorArgs & { issueId: string; dependsOnId: string }
+    ) => Promise<BeadsOkResult>
+    removeDependency: (
+      args: BeadsRepoSelectorArgs & { issueId: string; dependsOnId: string }
+    ) => Promise<BeadsOkResult>
   }
   linear: {
     connect: (args: {

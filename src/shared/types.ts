@@ -339,13 +339,18 @@ export type FolderWorkspace = {
 }
 
 export type FolderWorkspaceLinkedTask = {
-  provider: 'github' | 'gitlab' | 'linear' | 'jira'
+  provider: 'github' | 'gitlab' | 'linear' | 'jira' | 'beads'
   type: 'issue' | 'pr' | 'mr'
+  /** Beads issue IDs are strings (e.g. 'orca-42'), not numeric — beads
+   *  entries carry the 0 sentinel here and the real ID in beadsIdentifier,
+   *  same as Linear/Jira's string-identifier precedent. */
   number: number
   title: string
+  /** Beads has no web URL — beads entries carry ''. */
   url: string
   linearIdentifier?: string
   jiraIdentifier?: string
+  beadsIdentifier?: string
   repoId?: string
 }
 

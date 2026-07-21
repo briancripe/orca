@@ -126,3 +126,9 @@ src/renderer/src/i18n/locales/.es-catalog-cache.json
 
 # Bench result JSONs are working artifacts
 tools/benchmarks/results/terminal-pipeline-*.json
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
+.beads/

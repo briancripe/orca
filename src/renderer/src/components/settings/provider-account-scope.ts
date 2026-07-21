@@ -38,6 +38,34 @@ export function getProviderAccountScope(
   }
 }
 
+// Why: bd has no credentials to own, so unlike getProviderAccountScope this
+// copy describes which host runs the `bd` binary, not who owns an account.
+export function getBeadsHostScope(
+  settings: Pick<GlobalSettings, 'activeRuntimeEnvironmentId'> | null | undefined
+): ProviderAccountScope {
+  const runtimeId = settings?.activeRuntimeEnvironmentId?.trim()
+  if (runtimeId) {
+    return {
+      label: translate(
+        'auto.components.settings.providerAccountScope.remoteServer',
+        'Remote server: {{value0}}',
+        { value0: runtimeId }
+      ),
+      description: translate(
+        'auto.components.settings.providerAccountScope.beadsRemoteHost',
+        'bd runs on this remote server. Use Settings > Remote Orca Servers > Advanced to edit another default runtime scope.'
+      )
+    }
+  }
+  return {
+    label: getLocalExecutionHostLabel(),
+    description: translate(
+      'auto.components.settings.providerAccountScope.beadsLocalHost',
+      'bd runs on this desktop client. Use Settings > Remote Orca Servers > Advanced to edit server-owned hosts.'
+    )
+  }
+}
+
 export function getProviderRateLimitScope(
   settings: Pick<GlobalSettings, 'activeRuntimeEnvironmentId'> | null | undefined,
   providerLabel: string

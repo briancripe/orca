@@ -82,7 +82,11 @@ describe('isTagBuiltFromCurrentRef', () => {
     withGitRepo((repo) => {
       commit(repo, 'initial')
       commit(repo, 'release: v1.4.36-rc.6')
-      git(repo, ['tag', 'v1.4.36-rc.6'])
+      // Why -m: a plain `git tag <name>` becomes an annotated (message-required)
+      // tag under a global `tag.gpgSign=true`, which otherwise hangs on $EDITOR
+      // non-interactively — an explicit message keeps this hermetic regardless
+      // of the caller's signing config.
+      git(repo, ['tag', '-m', 'test tag', 'v1.4.36-rc.6'])
 
       expect(isTagBuiltFromCurrentRef('v1.4.36-rc.6', { cwd: repo })).toBe(true)
     })
@@ -93,7 +97,11 @@ describe('isTagBuiltFromCurrentRef', () => {
       commit(repo, 'initial')
       const source = git(repo, ['rev-parse', 'HEAD'])
       commit(repo, 'release: v1.4.36-rc.6')
-      git(repo, ['tag', 'v1.4.36-rc.6'])
+      // Why -m: a plain `git tag <name>` becomes an annotated (message-required)
+      // tag under a global `tag.gpgSign=true`, which otherwise hangs on $EDITOR
+      // non-interactively — an explicit message keeps this hermetic regardless
+      // of the caller's signing config.
+      git(repo, ['tag', '-m', 'test tag', 'v1.4.36-rc.6'])
       git(repo, ['checkout', source])
 
       expect(isTagBuiltFromCurrentRef('v1.4.36-rc.6', { cwd: repo })).toBe(true)
@@ -104,7 +112,11 @@ describe('isTagBuiltFromCurrentRef', () => {
     withGitRepo((repo) => {
       commit(repo, 'initial')
       commit(repo, 'release: v1.4.36-rc.6')
-      git(repo, ['tag', 'v1.4.36-rc.6'])
+      // Why -m: a plain `git tag <name>` becomes an annotated (message-required)
+      // tag under a global `tag.gpgSign=true`, which otherwise hangs on $EDITOR
+      // non-interactively — an explicit message keeps this hermetic regardless
+      // of the caller's signing config.
+      git(repo, ['tag', '-m', 'test tag', 'v1.4.36-rc.6'])
       commit(repo, 'fix: release packaging')
 
       expect(isTagBuiltFromCurrentRef('v1.4.36-rc.6', { cwd: repo })).toBe(false)

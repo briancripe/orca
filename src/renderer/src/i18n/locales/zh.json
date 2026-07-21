@@ -746,7 +746,10 @@
         "a4c8e1b2f7": "Codex 仍以 {{value0}} 身份登录",
         "d3e8a1f4b2": "账户已切换",
         "9375620cc3": "Restart this session to use {{value0}}. It stays on the previous account until you do.",
-        "6133594b12": "Keep old account"
+        "6133594b12": "Keep old account",
+        "9132779820": "关闭",
+        "e9b2c7d1a5": "重启此会话以使用 {{value0}}。折叠以继续使用当前账户。",
+        "f1a6c8e3b4": "折叠"
       },
       "FirstLaunchBanner": {
         "b9e1b966c7": "关闭通知",
@@ -3945,7 +3948,10 @@
           "d36883e046": "取消",
           "b79b39d865": "删除项目",
           "removeDescriptionSsh": "此操作仅将 {{name}} 从 Orca 中移除。文件仍保留在 {{host}} 上 — 重新添加该 SSH 主机即可恢复。",
-          "removeDescriptionLocal": "此操作仅将 {{name}} 从 Orca 中移除。文件仍保留在您的磁盘上。"
+          "removeDescriptionLocal": "此操作仅将 {{name}} 从 Orca 中移除。文件仍保留在您的磁盘上。",
+          "8c097ef04e": "来自 Orca。它仍保留在您的磁盘上。",
+          "e62415c3d0": "这仅删除",
+          "fromOrcaSsh": "从 Orca 中移除。其文件保留在 {{value0}} 上 — 重新添加该 SSH 主机即可恢复。"
         },
         "ScrollToCurrentWorkspaceToolbarButton": {
           "23989bb663": "显示活动工作区"
@@ -4615,7 +4621,8 @@
           "toastInstallCliDescription": "安装 Orca CLI，让智能体可以读取并编辑 Linear 任务。",
           "toastInstallSkillDescription": "安装 Linear 技能，让智能体可以通过 Orca CLI 读取并编辑 Linear 任务。",
           "toastRemoteDescription": "{{value0}} 远程智能体环境可能仍需要自己的设置。",
-          "toastWslDescription": "{{value0}} 此设置会在所选 WSL 智能体运行时中执行。"
+          "toastWslDescription": "{{value0}} 此设置会在所选 WSL 智能体运行时中执行。",
+          "notNow": "暂不"
         },
         "FolderWorkspaceComposerDialog": {
           "connectFailed": "无法连接到项目。",
@@ -6739,7 +6746,9 @@
           "dd67a1b6e1": "在任务源选择器和侧边栏快捷方式中显示 GitLab。",
           "7c5d7fdc20": "GitLab",
           "1db47236cd": "在任务源选择器和侧边栏快捷方式中显示 GitHub。",
-          "e14063e727": "GitHub"
+          "e14063e727": "GitHub",
+          "beads_label": "Beads",
+          "beads_description": "Show Beads in the Tasks source picker and sidebar shortcuts."
         },
         "TerminalAppearanceSection": {
           "a14a427ae4": "窗格分隔线的厚度。",
@@ -6988,7 +6997,8 @@
           "cf37ff69f6": "根据",
           "8abdab9f7c": "立即重启",
           "907131d741": "正在重新启动...",
-          "605a35d600": "Not applied by the terminal renderer yet — xterm.js has no bold color slot. A saved value is preserved."
+          "605a35d600": "Not applied by the terminal renderer yet — xterm.js has no bold color slot. A saved value is preserved.",
+          "fb8c6f1967": "粗体文本的颜色。如果未设置，则返回正常颜色。"
         },
         "UIZoomControl": {
           "c2c64b24d0": "重置"
@@ -7926,7 +7936,9 @@
             "41ccade05c": "gh",
             "b79c21bd42": "GitHub",
             "7166b9090c": "通过 gh CLI 进行 GitHub 身份验证。",
-            "f16e41cc72": "GitHub 集成"
+            "f16e41cc72": "GitHub 集成",
+            "beads_title": "Beads Integration",
+            "beads_description": "Beads (bd) detection via the local CLI."
           }
         },
         "jira": {
@@ -8886,7 +8898,9 @@
           "localMac": "本地 Mac",
           "localCredentials": "此提供商的凭据和账户检查由该桌面客户端拥有。使用“设置 > 远程 Orca 服务器 > 高级”编辑服务器拥有的凭据。",
           "remoteServerRateLimit": "{{value0}} API 预算从此远程服务器上的 CLI 获取。使用“设置 > 远程 Orca 服务器 > 高级”查看另一个默认运行时预算。",
-          "localRateLimit": "{{value0}} API 预算从此桌面客户端上的 CLI 获取。使用“设置 > 远程 Orca 服务器 > 高级”查看服务器拥有的预算。"
+          "localRateLimit": "{{value0}} API 预算从此桌面客户端上的 CLI 获取。使用“设置 > 远程 Orca 服务器 > 高级”查看服务器拥有的预算。",
+          "beadsRemoteHost": "bd runs on this remote server. Use Settings > Remote Orca Servers > Advanced to edit another default runtime scope.",
+          "beadsLocalHost": "bd runs on this desktop client. Use Settings > Remote Orca Servers > Advanced to edit server-owned hosts."
         },
         "settingOwnership": {
           "clientDefault": "客户端默认",
@@ -9212,7 +9226,14 @@
           "signInRequired": "请登录以使用 Orca Mobile Relay。",
           "relayUnavailable": "此版本不支持 Orca Relay。请使用本地网络。",
           "signInAgain": "重新登录",
-          "localTitle": "本地网络"
+          "localTitle": "本地网络",
+          "title": "新手机应如何连接？",
+          "anywhere": "使用 Orca Relay 连接",
+          "recommended": "推荐",
+          "automaticDescription": "Orca 会优先使用直接连接，否则使用 Orca Relay。",
+          "signInDescription": "请在此桌面端登录以使用 Orca Relay。",
+          "localOnly": "仅限本地网络",
+          "localShort": "局域网或 Tailscale"
         },
         "MobilePairingSetupSection": {
           "title": "配对手机",
@@ -9223,7 +9244,14 @@
           "step1Title": "连接方式",
           "step2Title": "此电脑的地址",
           "step2RelayDescription": "距离较近时用于快速直接连接。Relay 覆盖远程访问。",
-          "step2LocalDescription": "手机必须能通过 Wi‑Fi 或 Tailscale 访问此地址。"
+          "step2LocalDescription": "手机必须能通过 Wi‑Fi 或 Tailscale 访问此地址。",
+          "automaticDescription": "配对码包含直接访问方式和加密的 Orca Relay 备用连接。",
+          "localDescription": "配对码仅通过下方的本地网络地址连接。",
+          "localSettings": "本地连接设置",
+          "localAddressDescription": "选择 Orca Mobile 可用于直接访问此电脑的局域网或专用网络地址。",
+          "tailnet": "使用自己的 tailnet 连接",
+          "tailnetDescription": "在此电脑和手机上安装 Tailscale，登录同一个 tailnet，然后在上方选择其 100.x.y.z 地址。",
+          "getTailscale": "获取 Tailscale"
         },
         "MobileRelayBetaAvailability": {
           "about": "关于 Orca Relay 测试版",
@@ -9256,6 +9284,30 @@
           "title": "Editor Font Family",
           "description": "Font used by file editors and diff views. Leave empty to follow the terminal font.",
           "placeholder": "Same as terminal font"
+        },
+        "OrchestrationExamplesDialog": {
+          "3d1aa105e3": "复制提示",
+          "9b4c004998": "完成",
+          "969cec9739": "复制 {{value0}} 示例提示",
+          "4e46da1889": "复制提示失败。",
+          "80c6f2feb8": "复制示例提示。"
+        },
+        "beads": {
+          "integration": {
+            "card": {
+              "description_prefix": "Browse and start work from",
+              "bd": "bd",
+              "description_suffix": "issues via the local CLI.",
+              "connected": "Connected",
+              "unavailable": "Unavailable",
+              "not_installed": "Not installed",
+              "host_scope_prefix": "Host scope",
+              "unavailable_copy": "Beads status is not available in this runtime yet.",
+              "recheck": "Re-check",
+              "not_installed_copy": "Install Beads (bd) to browse and start work from its issues.",
+              "install": "Install Beads"
+            }
+          }
         }
       },
       "right": {
@@ -13631,6 +13683,155 @@
       "certificateChallengeChanged": "The certificate request changed. Retry the page and review the new warning.",
       "certificateChallengeUnavailable": "This certificate request is no longer available. Retry the page to request a new one.",
       "certificateProceedFailed": "Orca could not approve this certificate request. Retry the page and try again."
+    }
+  },
+  "beads": {
+    "section": {
+      "comments": "Comments",
+      "dependencies": "Dependencies",
+      "description": "Description",
+      "design": "Design",
+      "acceptanceCriteria": "Acceptance criteria",
+      "notes": "Notes",
+      "empty": "None"
+    },
+    "comments": {
+      "empty": "No comments yet.",
+      "composerAria": "Add a comment",
+      "placeholder": "Add a comment…",
+      "submit": "Comment"
+    },
+    "create": {
+      "title": "New Beads issue",
+      "titleAria": "Title",
+      "titlePlaceholder": "Title",
+      "descriptionAria": "Description",
+      "descriptionPlaceholder": "Description",
+      "typeAria": "Type",
+      "typePlaceholder": "Type",
+      "priorityAria": "Priority",
+      "assigneeAria": "Assignee",
+      "assigneePlaceholder": "Assignee",
+      "labelsAria": "Labels (comma separated)",
+      "labelsPlaceholder": "label-a, label-b",
+      "cancel": "Cancel",
+      "submit": "Create issue"
+    },
+    "dependencies": {
+      "empty": "No dependencies."
+    },
+    "filter": {
+      "ready": "Ready",
+      "type": "Type",
+      "typeAria": "Filter by type",
+      "label": "Label",
+      "labelAria": "Filter by label",
+      "assignee": "Assignee",
+      "assigneeAria": "Filter by assignee",
+      "groupByEpic": "Group by epic"
+    },
+    "action": {
+      "refresh": "Refresh Beads issues",
+      "newIssue": "New issue"
+    },
+    "dialog": {
+      "description": "Beads issue details",
+      "loadError": "Could not load this Beads issue.",
+      "save": "Save",
+      "cancel": "Cancel",
+      "edit": "Edit",
+      "close": "Close details",
+      "titleAria": "Issue title",
+      "typeAria": "Issue type",
+      "typePlaceholder": "Type",
+      "priorityAria": "Priority",
+      "assigneeAria": "Assignee",
+      "assigneePlaceholder": "Assignee",
+      "labelsAria": "Labels (comma separated)",
+      "labelsPlaceholder": "label-a, label-b",
+      "closeReasonAria": "Close reason (optional)",
+      "closeReason": "Reason (optional)",
+      "confirmClose": "Close issue",
+      "reopen": "Reopen",
+      "closeIssue": "Close issue",
+      "back": "Back",
+      "startWork": "Start work"
+    },
+    "list": {
+      "error": "Could not load Beads issues for this repository.",
+      "emptyFiltered": "No issues match the current filters.",
+      "empty": "No Beads issues yet. Create one to get started."
+    },
+    "guidance": {
+      "bdMissing": {
+        "title": "Beads (bd) is not installed",
+        "body": "Install the bd binary and make sure it is on PATH to browse and manage Beads issues here."
+      },
+      "uninitialized": {
+        "title": "This repository has no Beads store",
+        "body": "Run `bd init` in this repository to create its Beads store, then reload."
+      }
+    },
+    "surface": {
+      "noRepo": "Select a repository to browse its Beads issues."
+    },
+    "column": {
+      "id": "Pri / ID",
+      "title": "Title",
+      "status": "Status / Type",
+      "updated": "Updated"
+    },
+    "dep": {
+      "blocks": "Blocked by",
+      "parentChild": "Parent / child",
+      "related": "Related",
+      "relatesTo": "Relates to",
+      "discoveredFrom": "Discovered from",
+      "duplicates": "Duplicates",
+      "supersedes": "Supersedes",
+      "confirmRemove": "Remove",
+      "cancelRemove": "Cancel",
+      "removeAria": "Remove dependency {{value0}}",
+      "blockedBy": "Blocked by open issues",
+      "dismiss": "Dismiss",
+      "addAria": "Add a blocking dependency",
+      "addPlaceholder": "Block on… (search id or title)"
+    },
+    "status": {
+      "open": "Open",
+      "in_progress": "In progress",
+      "blocked": "Blocked",
+      "deferred": "Deferred",
+      "closed": "Closed",
+      "pinned": "Pinned",
+      "hooked": "Hooked"
+    },
+    "error": {
+      "loadList": "Failed to load Beads issues.",
+      "notFound": "Issue not found.",
+      "loadDetail": "Failed to load issue.",
+      "addDependency": "Could not add the dependency.",
+      "removeDependency": "Could not remove the dependency.",
+      "create": "Could not create the issue.",
+      "edit": "Could not save the issue.",
+      "comment": "Could not add the comment.",
+      "close": "Could not close the issue.",
+      "reopen": "Could not reopen the issue."
+    },
+    "source": {
+      "label": "Beads"
+    },
+    "epic": {
+      "toggleAria": "Toggle epic {{value0}}",
+      "noChildren": "No child issues.",
+      "ungrouped": "Ungrouped"
+    },
+    "success": {
+      "create": "Issue created.",
+      "edit": "Issue updated.",
+      "comment": "Comment added.",
+      "close": "Issue closed.",
+      "reopen": "Issue reopened."
     }
   }
 }

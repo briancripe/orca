@@ -6,7 +6,8 @@ import { getRepoBackedProviderAvailability } from './task-source-provider-availa
 const readyPreflight: PreflightStatus = {
   git: { installed: true },
   gh: { installed: true, authenticated: true },
-  glab: { installed: true, authenticated: true }
+  glab: { installed: true, authenticated: true },
+  beads: { installed: true }
 }
 
 function source(hostId: TaskSourceContext['hostId']): TaskSourceContext {
@@ -153,6 +154,100 @@ describe('task source provider availability', () => {
           ...readyPreflight,
           gh: { installed: false, authenticated: false }
         }
+      })
+    ).toEqual([])
+  })
+
+  it('marks bd unavailable when the binary is missing from PATH', () => {
+    expect(
+      getRepoBackedProviderAvailability({
+        provider: 'beads',
+        contexts: [source('local')],
+        preflightReady: true,
+        preflightStatus: {
+          ...readyPreflight,
+          beads: { installed: false }
+        }
+      })
+    ).toEqual([{ hostId: 'local', reason: 'unavailable-source-tool' }])
+  })
+
+  it('treats a missing beads preflight field (older server) as not installed', () => {
+    const { beads: _beads, ...preBeadsPreflight } = readyPreflight
+
+    expect(
+      getRepoBackedProviderAvailability({
+        provider: 'beads',
+        contexts: [source('local')],
+        preflightReady: true,
+        preflightStatus: preBeadsPreflight
+      })
+    ).toEqual([{ hostId: 'local', reason: 'unavailable-source-tool' }])
+  })
+
+  it('waits for repo diagnose before reporting bd availability once bd is on PATH', () => {
+    expect(
+      getRepoBackedProviderAvailability({
+        provider: 'beads',
+        contexts: [source('local')],
+        preflightReady: true,
+        preflightStatus: readyPreflight
+      })
+    ).toEqual([])
+  })
+
+  it('marks bd unavailable with a distinct init-guidance reason when the repo is not yet initialized', () => {
+    expect(
+      getRepoBackedProviderAvailability({
+        provider: 'beads',
+        contexts: [source('local')],
+        preflightReady: true,
+        preflightStatus: readyPreflight,
+        beadsRepoDiagnosisByRepoId: new Map([
+          ['repo-local', { checked: true, status: { bdAvailable: true, repoInitialized: false } }]
+        ])
+      })
+    ).toEqual([{ hostId: 'local', reason: 'beads-repo-not-initialized' }])
+  })
+
+  it('marks bd unavailable with the generic tool reason when diagnose reports bd missing', () => {
+    expect(
+      getRepoBackedProviderAvailability({
+        provider: 'beads',
+        contexts: [source('local')],
+        preflightReady: true,
+        preflightStatus: readyPreflight,
+        beadsRepoDiagnosisByRepoId: new Map([
+          ['repo-local', { checked: true, status: { bdAvailable: false, repoInitialized: false } }]
+        ])
+      })
+    ).toEqual([{ hostId: 'local', reason: 'unavailable-source-tool' }])
+  })
+
+  it('marks bd available when installed and the repo is initialized', () => {
+    expect(
+      getRepoBackedProviderAvailability({
+        provider: 'beads',
+        contexts: [source('local')],
+        preflightReady: true,
+        preflightStatus: readyPreflight,
+        beadsRepoDiagnosisByRepoId: new Map([
+          ['repo-local', { checked: true, status: { bdAvailable: true, repoInitialized: true } }]
+        ])
+      })
+    ).toEqual([])
+  })
+
+  it('does not apply beads repo diagnosis to other providers', () => {
+    expect(
+      getRepoBackedProviderAvailability({
+        provider: 'github',
+        contexts: [source('local')],
+        preflightReady: true,
+        preflightStatus: readyPreflight,
+        beadsRepoDiagnosisByRepoId: new Map([
+          ['repo-local', { checked: true, status: { bdAvailable: false, repoInitialized: false } }]
+        ])
       })
     ).toEqual([])
   })

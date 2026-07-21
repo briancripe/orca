@@ -143,6 +143,8 @@ import { useRepoAssigneesBySlug } from '@/hooks/useGitHubSlugMetadata'
 import GitHubItemDialog, { type ItemDialogTab } from '@/components/GitHubItemDialog'
 import PullRequestPage from '@/components/PullRequestPage'
 import GitLabItemDialog from '@/components/GitLabItemDialog'
+import { BeadsTaskSurface } from '@/components/beads/BeadsTaskSurface'
+import type { BeadsRepoContext } from '@/store/slices/beads-cache'
 import ProjectViewWrapper from '@/components/github-project/ProjectViewWrapper'
 import { getSettingsForRepoRuntimeOwner } from '@/lib/repo-runtime-owner'
 import {
@@ -189,7 +191,11 @@ import {
   normalizeTaskSourceContext,
   type TaskSourceContext
 } from '../../../shared/task-source-context'
-import { getLinearIssueWorkspaceName } from '../../../shared/workspace-name'
+import {
+  getBeadsIssueWorkspaceSeed,
+  getLinearIssueWorkspaceName
+} from '../../../shared/workspace-name'
+import { toBeadsLinkedWorkItem } from '@/components/sidebar/folder-workspace-composer-helpers'
 import {
   buildTaskPageRepoSourceState,
   deriveTaskPageGitHubWorkItemsFetchOptions,
@@ -300,6 +306,7 @@ import type {
   TaskProvider,
   TaskViewPresetId
 } from '../../../shared/types'
+import type { BeadsIssueInfo } from '../../../shared/beads-types'
 import type { PreflightStatus } from '../../../preload/api-types'
 import type { GitLabProjectRef } from '../../../shared/gitlab-types'
 import {
@@ -3206,6 +3213,12 @@ export default function TaskPage(): React.JSX.Element {
 
   // Why: many affordances need *a* repo; use the first selected as default, while cross-repo dialogs still let the user override per-action.
   const primaryRepo = selectedRepos[0] ?? null
+  // Why: beads is repo-scoped (like GitLab) with no account/project to select —
+  // the primary selected repo's path + id identify its `.beads/` store.
+  const beadsRepoContext = useMemo<BeadsRepoContext | null>(
+    () => (primaryRepo?.path ? { repoPath: primaryRepo.path, repoId: primaryRepo.id } : null),
+    [primaryRepo]
+  )
   const linearWorkspaces = linearStatus.workspaces ?? []
   const selectedLinearWorkspaceId =
     linearStatus.selectedWorkspaceId ??
@@ -3234,7 +3247,8 @@ export default function TaskPage(): React.JSX.Element {
         preferredVisibleTaskProviders,
         {
           gitlabInstalled: preflightStatusCurrent && preflightStatus?.glab?.installed === true,
-          linearConnected: linearConnected === true
+          linearConnected: linearConnected === true,
+          beadsInstalled: preflightStatusCurrent && preflightStatus?.beads?.installed === true
         },
         defaultTaskSource
       ),
@@ -3243,7 +3257,8 @@ export default function TaskPage(): React.JSX.Element {
       linearConnected,
       preferredVisibleTaskProviders,
       preflightStatusCurrent,
-      preflightStatus?.glab?.installed
+      preflightStatus?.glab?.installed,
+      preflightStatus?.beads?.installed
     ]
   )
   const sourceOptions = getSourceOptions()
@@ -7922,6 +7937,26 @@ export default function TaskPage(): React.JSX.Element {
     [openComposerForJiraItem]
   )
 
+  const handleStartWorkFromBeads = useCallback(
+    (
+      issue: {
+        id: string
+        title: string
+      } & Pick<BeadsIssueInfo, 'description' | 'design' | 'acceptanceCriteria' | 'notes'>
+    ): void => {
+      // Why: mirror the Jira/Linear "start work" flow — open the New Workspace
+      // dialog pre-filled with a beads-linked task (url '' since beads has no
+      // hosted page) rather than yolo-creating the worktree.
+      useAppStore.getState().recordFeatureInteraction('beads-tasks')
+      openModal('new-workspace-composer', {
+        linkedWorkItem: toBeadsLinkedWorkItem(issue),
+        prefilledName: getBeadsIssueWorkspaceSeed(issue),
+        telemetrySource: 'sidebar'
+      })
+    },
+    [openModal]
+  )
+
   const taskPageListChromeHidden = shouldHideTaskPageListChrome({
     taskSource,
     hasGitHubDetail: Boolean(dialogWorkItem),
@@ -9003,7 +9038,11 @@ export default function TaskPage(): React.JSX.Element {
             </section>
           </div>
 
-          {taskSource === 'github' && dialogWorkItem ? (
+          {taskSource === 'beads' ? (
+            <div className="mt-3 flex min-h-0 min-w-0 max-h-full flex-1 flex-col">
+              <BeadsTaskSurface ctx={beadsRepoContext} onStartWork={handleStartWorkFromBeads} />
+            </div>
+          ) : taskSource === 'github' && dialogWorkItem ? (
             dialogWorkItem.type === 'pr' ? (
               <PullRequestPage
                 workItem={dialogWorkItem}

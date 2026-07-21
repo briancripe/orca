@@ -100,7 +100,8 @@ export function SidebarTaskNavButton(): React.JSX.Element | null {
         preferredVisibleTaskProviders,
         {
           gitlabInstalled: preflightStatusCurrent && preflightStatus?.glab?.installed === true,
-          linearConnected: linearStatus.connected === true
+          linearConnected: linearStatus.connected === true,
+          beadsInstalled: preflightStatusCurrent && preflightStatus?.beads?.installed === true
         },
         defaultTaskSource
       ),
@@ -109,7 +110,8 @@ export function SidebarTaskNavButton(): React.JSX.Element | null {
       linearStatus.connected,
       preferredVisibleTaskProviders,
       preflightStatusCurrent,
-      preflightStatus?.glab?.installed
+      preflightStatus?.glab?.installed,
+      preflightStatus?.beads?.installed
     ]
   )
   const resolvedDefaultTaskSource = React.useMemo(

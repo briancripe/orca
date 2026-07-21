@@ -746,7 +746,10 @@
         "a4c8e1b2f7": "Codex はまだ {{value0}} としてサインインしています",
         "d3e8a1f4b2": "アカウントを切り替えました",
         "9375620cc3": "Restart this session to use {{value0}}. It stays on the previous account until you do.",
-        "6133594b12": "Keep old account"
+        "6133594b12": "Keep old account",
+        "9132779820": "閉じる",
+        "e9b2c7d1a5": "{{value0}} を使用するにはこのセッションを再起動してください。現在のアカウントで作業を続けるには折りたたんでください。",
+        "f1a6c8e3b4": "折りたたむ"
       },
       "FirstLaunchBanner": {
         "b9e1b966c7": "通知を閉じる",
@@ -3945,7 +3948,10 @@
           "d36883e046": "キャンセル",
           "b79b39d865": "プロジェクトの削除",
           "removeDescriptionSsh": "この操作は {{name}} を Orca から削除するだけです。ファイルは {{host}} に残っており、その SSH ホストを再追加すれば復元できます。",
-          "removeDescriptionLocal": "この操作は {{name}} を Orca から削除するだけです。ファイルはディスクに残っています。"
+          "removeDescriptionLocal": "この操作は {{name}} を Orca から削除するだけです。ファイルはディスクに残っています。",
+          "8c097ef04e": "Orca から。それはまだディスク上にあります。",
+          "e62415c3d0": "これは削除するだけです",
+          "fromOrcaSsh": "from Orca. Its files stay on {{value0}} — re-add that SSH host to recover it."
         },
         "ScrollToCurrentWorkspaceToolbarButton": {
           "23989bb663": "アクティブなワークスペースを表示する"
@@ -4615,7 +4621,8 @@
           "toastInstallCliDescription": "Orca CLI をインストールして、agents が Linear タスクを読み書きできるようにします。",
           "toastInstallSkillDescription": "Linear スキルをインストールして、agents が Orca CLI を通じて Linear タスクを読み書きできるようにします。",
           "toastRemoteDescription": "{{value0}} リモート agent 環境では独自の設定が必要な場合があります。",
-          "toastWslDescription": "{{value0}} この設定は選択した WSL agent ランタイムで実行されます。"
+          "toastWslDescription": "{{value0}} この設定は選択した WSL agent ランタイムで実行されます。",
+          "notNow": "後で"
         },
         "FolderWorkspaceComposerDialog": {
           "connectFailed": "プロジェクトに接続できませんでした。",
@@ -6776,7 +6783,9 @@
           "dd67a1b6e1": "タスクのソース ピッカーとサイドバーのショートカットに GitLab を表示します。",
           "7c5d7fdc20": "GitLab",
           "1db47236cd": "タスクのソース ピッカーとサイドバーのショートカットに GitHub を表示します。",
-          "e14063e727": "GitHub"
+          "e14063e727": "GitHub",
+          "beads_label": "Beads",
+          "beads_description": "Show Beads in the Tasks source picker and sidebar shortcuts."
         },
         "TerminalAppearanceSection": {
           "a14a427ae4": "ペイン分割線の太さ。",
@@ -7025,7 +7034,8 @@
           "cf37ff69f6": "ベース",
           "8abdab9f7c": "今すぐ再起動",
           "907131d741": "再起動中…",
-          "605a35d600": "Not applied by the terminal renderer yet — xterm.js has no bold color slot. A saved value is preserved."
+          "605a35d600": "Not applied by the terminal renderer yet — xterm.js has no bold color slot. A saved value is preserved.",
+          "fb8c6f1967": "太字のテキストの色。設定されていない場合は、通常の色に戻ります。"
         },
         "UIZoomControl": {
           "c2c64b24d0": "リセット"
@@ -7963,7 +7973,9 @@
             "41ccade05c": "gh",
             "b79c21bd42": "GitHub",
             "7166b9090c": "gh CLI を介した GitHub 認証。",
-            "f16e41cc72": "GitHub 連携"
+            "f16e41cc72": "GitHub 連携",
+            "beads_title": "Beads Integration",
+            "beads_description": "Beads (bd) detection via the local CLI."
           }
         },
         "jira": {
@@ -8886,7 +8898,9 @@
           "localMac": "Local Mac",
           "localCredentials": "Credentials and account checks for this provider are owned by this desktop client. Use Settings > Remote Orca Servers > Advanced to edit server-owned credentials.",
           "remoteServerRateLimit": "{{value0}} API budget is fetched from the CLI on this remote server. Use Settings > Remote Orca Servers > Advanced to view another default runtime budget.",
-          "localRateLimit": "{{value0}} API budget is fetched from the CLI on this desktop client. Use Settings > Remote Orca Servers > Advanced to view server-owned budgets."
+          "localRateLimit": "{{value0}} API budget is fetched from the CLI on this desktop client. Use Settings > Remote Orca Servers > Advanced to view server-owned budgets.",
+          "beadsRemoteHost": "bd runs on this remote server. Use Settings > Remote Orca Servers > Advanced to edit another default runtime scope.",
+          "beadsLocalHost": "bd runs on this desktop client. Use Settings > Remote Orca Servers > Advanced to edit server-owned hosts."
         },
         "settingOwnership": {
           "clientDefault": "Client default",
@@ -9212,7 +9226,14 @@
           "signInRequired": "Orca Mobile Relay を使用するにはサインインしてください。",
           "relayUnavailable": "このビルドでは Orca Relay を利用できません。ローカルネットワークをご利用ください。",
           "signInAgain": "再サインイン",
-          "localTitle": "ローカルネットワーク"
+          "localTitle": "ローカルネットワーク",
+          "title": "新しいスマートフォンをどのように接続しますか？",
+          "anywhere": "Orca Relay で接続",
+          "recommended": "推奨",
+          "automaticDescription": "利用可能な場合は直接接続し、それ以外ではOrca Relayを使用します。",
+          "signInDescription": "Orca Relayを使用するには、このデスクトップでサインインしてください。",
+          "localOnly": "ローカルネットワークのみ",
+          "localShort": "LAN または Tailscale"
         },
         "MobilePairingSetupSection": {
           "title": "スマートフォンをペアリング",
@@ -9223,7 +9244,14 @@
           "step1Title": "接続方法",
           "step2Title": "このコンピューターのアドレス",
           "step2RelayDescription": "近くでは高速な直接接続に使用されます。Relay はリモートアクセスに対応します。",
-          "step2LocalDescription": "スマートフォンが Wi‑Fi または Tailscale でこのアドレスに到達できる必要があります。"
+          "step2LocalDescription": "スマートフォンが Wi‑Fi または Tailscale でこのアドレスに到達できる必要があります。",
+          "automaticDescription": "ペアリングコードには、直接接続と暗号化されたOrca Relayのフォールバックが含まれます。",
+          "localDescription": "ペアリングコードは、下のローカルネットワークアドレスだけを使用します。",
+          "localSettings": "ローカル接続設定",
+          "localAddressDescription": "Orca Mobileからこのコンピューターへ直接接続できるLANまたはプライベートネットワークのアドレスを選択します。",
+          "tailnet": "自分のtailnetで接続",
+          "tailnetDescription": "このコンピューターとスマートフォンにTailscaleをインストールし、同じtailnetにサインインして、上で100.x.y.zアドレスを選択します。",
+          "getTailscale": "Tailscaleを入手"
         },
         "MobileRelayBetaAvailability": {
           "about": "Orca Relay ベータについて",
@@ -9256,6 +9284,30 @@
           "title": "Editor Font Family",
           "description": "Font used by file editors and diff views. Leave empty to follow the terminal font.",
           "placeholder": "Same as terminal font"
+        },
+        "OrchestrationExamplesDialog": {
+          "3d1aa105e3": "プロンプトのコピー",
+          "9b4c004998": "完了",
+          "969cec9739": "{{value0}} プロンプトの例をコピーします",
+          "4e46da1889": "プロンプトのコピーに失敗しました。",
+          "80c6f2feb8": "プロンプトの例をコピーしました。"
+        },
+        "beads": {
+          "integration": {
+            "card": {
+              "description_prefix": "Browse and start work from",
+              "bd": "bd",
+              "description_suffix": "issues via the local CLI.",
+              "connected": "Connected",
+              "unavailable": "Unavailable",
+              "not_installed": "Not installed",
+              "host_scope_prefix": "Host scope",
+              "unavailable_copy": "Beads status is not available in this runtime yet.",
+              "recheck": "Re-check",
+              "not_installed_copy": "Install Beads (bd) to browse and start work from its issues.",
+              "install": "Install Beads"
+            }
+          }
         }
       },
       "right": {
@@ -13631,6 +13683,155 @@
       "certificateChallengeChanged": "The certificate request changed. Retry the page and review the new warning.",
       "certificateChallengeUnavailable": "This certificate request is no longer available. Retry the page to request a new one.",
       "certificateProceedFailed": "Orca could not approve this certificate request. Retry the page and try again."
+    }
+  },
+  "beads": {
+    "section": {
+      "comments": "Comments",
+      "dependencies": "Dependencies",
+      "description": "Description",
+      "design": "Design",
+      "acceptanceCriteria": "Acceptance criteria",
+      "notes": "Notes",
+      "empty": "None"
+    },
+    "comments": {
+      "empty": "No comments yet.",
+      "composerAria": "Add a comment",
+      "placeholder": "Add a comment…",
+      "submit": "Comment"
+    },
+    "create": {
+      "title": "New Beads issue",
+      "titleAria": "Title",
+      "titlePlaceholder": "Title",
+      "descriptionAria": "Description",
+      "descriptionPlaceholder": "Description",
+      "typeAria": "Type",
+      "typePlaceholder": "Type",
+      "priorityAria": "Priority",
+      "assigneeAria": "Assignee",
+      "assigneePlaceholder": "Assignee",
+      "labelsAria": "Labels (comma separated)",
+      "labelsPlaceholder": "label-a, label-b",
+      "cancel": "Cancel",
+      "submit": "Create issue"
+    },
+    "dependencies": {
+      "empty": "No dependencies."
+    },
+    "filter": {
+      "ready": "Ready",
+      "type": "Type",
+      "typeAria": "Filter by type",
+      "label": "Label",
+      "labelAria": "Filter by label",
+      "assignee": "Assignee",
+      "assigneeAria": "Filter by assignee",
+      "groupByEpic": "Group by epic"
+    },
+    "action": {
+      "refresh": "Refresh Beads issues",
+      "newIssue": "New issue"
+    },
+    "dialog": {
+      "description": "Beads issue details",
+      "loadError": "Could not load this Beads issue.",
+      "save": "Save",
+      "cancel": "Cancel",
+      "edit": "Edit",
+      "close": "Close details",
+      "titleAria": "Issue title",
+      "typeAria": "Issue type",
+      "typePlaceholder": "Type",
+      "priorityAria": "Priority",
+      "assigneeAria": "Assignee",
+      "assigneePlaceholder": "Assignee",
+      "labelsAria": "Labels (comma separated)",
+      "labelsPlaceholder": "label-a, label-b",
+      "closeReasonAria": "Close reason (optional)",
+      "closeReason": "Reason (optional)",
+      "confirmClose": "Close issue",
+      "reopen": "Reopen",
+      "closeIssue": "Close issue",
+      "back": "Back",
+      "startWork": "Start work"
+    },
+    "list": {
+      "error": "Could not load Beads issues for this repository.",
+      "emptyFiltered": "No issues match the current filters.",
+      "empty": "No Beads issues yet. Create one to get started."
+    },
+    "guidance": {
+      "bdMissing": {
+        "title": "Beads (bd) is not installed",
+        "body": "Install the bd binary and make sure it is on PATH to browse and manage Beads issues here."
+      },
+      "uninitialized": {
+        "title": "This repository has no Beads store",
+        "body": "Run `bd init` in this repository to create its Beads store, then reload."
+      }
+    },
+    "surface": {
+      "noRepo": "Select a repository to browse its Beads issues."
+    },
+    "column": {
+      "id": "Pri / ID",
+      "title": "Title",
+      "status": "Status / Type",
+      "updated": "Updated"
+    },
+    "dep": {
+      "blocks": "Blocked by",
+      "parentChild": "Parent / child",
+      "related": "Related",
+      "relatesTo": "Relates to",
+      "discoveredFrom": "Discovered from",
+      "duplicates": "Duplicates",
+      "supersedes": "Supersedes",
+      "confirmRemove": "Remove",
+      "cancelRemove": "Cancel",
+      "removeAria": "Remove dependency {{value0}}",
+      "blockedBy": "Blocked by open issues",
+      "dismiss": "Dismiss",
+      "addAria": "Add a blocking dependency",
+      "addPlaceholder": "Block on… (search id or title)"
+    },
+    "status": {
+      "open": "Open",
+      "in_progress": "In progress",
+      "blocked": "Blocked",
+      "deferred": "Deferred",
+      "closed": "Closed",
+      "pinned": "Pinned",
+      "hooked": "Hooked"
+    },
+    "error": {
+      "loadList": "Failed to load Beads issues.",
+      "notFound": "Issue not found.",
+      "loadDetail": "Failed to load issue.",
+      "addDependency": "Could not add the dependency.",
+      "removeDependency": "Could not remove the dependency.",
+      "create": "Could not create the issue.",
+      "edit": "Could not save the issue.",
+      "comment": "Could not add the comment.",
+      "close": "Could not close the issue.",
+      "reopen": "Could not reopen the issue."
+    },
+    "source": {
+      "label": "Beads"
+    },
+    "epic": {
+      "toggleAria": "Toggle epic {{value0}}",
+      "noChildren": "No child issues.",
+      "ungrouped": "Ungrouped"
+    },
+    "success": {
+      "create": "Issue created.",
+      "edit": "Issue updated.",
+      "comment": "Comment added.",
+      "close": "Issue closed.",
+      "reopen": "Issue reopened."
     }
   }
 }
